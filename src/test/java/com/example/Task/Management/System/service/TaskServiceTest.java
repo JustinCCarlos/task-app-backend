@@ -44,26 +44,56 @@ public class TaskServiceTest {
     @Captor
     private ArgumentCaptor<TaskDto> taskDtoCaptor;
 
-    private Category category;
+    private Category defaultCategory;
+    private Task defaultTask;
+    private TaskDto defaultTaskDto;
 
     @BeforeEach
     public void init() {
         taskCaptor = ArgumentCaptor.forClass(Task.class);
         taskDtoCaptor = ArgumentCaptor.forClass(TaskDto.class);
 
-        category = Category.builder()
+        LocalDateTime defaultStartDate = LocalDateTime.of(2026, Month.FEBRUARY, 27,0,0);
+        LocalDateTime defaultEndDate = LocalDateTime.of(2026, Month.MARCH, 30,0,0);
+        LocalDateTime defaultFinished = LocalDateTime.of(2026, Month.MARCH, 15,0,0);
+
+        defaultCategory = Category.builder()
                 .categoryId(1L)
                 .name("Home")
+                .build();
+
+        defaultTask = Task.builder()
+                .taskId(1L)
+                .title("Default Task")
+                .completed(false)
+                .category(defaultCategory)
+                .priority(3)
+                .startDate(defaultStartDate)
+                .endDate(null)
+                .finishedDate(null)
+                .overdue(false)
+                .build();
+
+        defaultTaskDto = TaskDto.builder()
+                .taskId(defaultTask.getTaskId())
+                .title(defaultTask.getTitle())
+                .completed(defaultTask.isCompleted())
+                .categoryId(defaultTask.getCategory().getCategoryId())
+                .priority(defaultTask.getPriority())
+                .startDate(defaultTask.getStartDate())
+                .endDate(defaultTask.getEndDate())
+                .finishedDate(defaultTask.getFinishedDate())
+                .overdue(defaultTask.isOverdue())
                 .build();
     }
 
     @Test
     public void TaskService_GetAllTask_ReturnAllTaskDto(){
-        Task task1 = Task.builder()
+        Task task1 = defaultTask.toBuilder()
                 .title("task1").build();
-        Task task2 = Task.builder()
+        Task task2 = defaultTask.toBuilder()
                 .title("task2").build();
-        Task task3 = Task.builder()
+        Task task3 = defaultTask.toBuilder()
                 .title("task3").build();
 
         List<Task> tasks = new ArrayList<>();
@@ -83,7 +113,7 @@ public class TaskServiceTest {
 
     @Test
     public void TaskService_GetTaskById_ReturnTask() {
-        Task task = Task.builder()
+        Task task = defaultTask.toBuilder()
                 .title("test task")
                 .build();
 
@@ -106,10 +136,10 @@ public class TaskServiceTest {
 
     @Test
     public void TaskService_GetTaskContaining_ReturnListOfTaskDto() {
-        Task task1 = Task.builder()
+        Task task1 = defaultTask.toBuilder()
                 .title("to be found 1")
                 .build();
-        Task task2 = Task.builder()
+        Task task2 = defaultTask.toBuilder()
                 .title("to be founded 2")
                 .build();
 
@@ -127,13 +157,15 @@ public class TaskServiceTest {
     }
 
     @Test
-    public void TaskService_AddTask_TitleNullPriority_ReturnTaskDto(){
-        TaskDto taskDto = TaskDto.builder()
+    public void TaskService_AddTask_NullPriority_ReturnTaskDto(){
+        TaskDto taskDto = defaultTaskDto.toBuilder()
                 .title("title")
+                .categoryId(null)
                 .build();
 
-        Task task = Task.builder()
+        Task task = defaultTask.toBuilder()
                 .title(taskDto.getTitle())
+                .category(null)
                 .build();
 
         when(taskRepository.save(any(Task.class))).thenReturn(task);
@@ -148,19 +180,19 @@ public class TaskServiceTest {
 
     @Test
     public void TaskService_AddTask_TitleCategory_ReturnTaskDto(){
-        TaskDto taskDto = TaskDto.builder()
+        TaskDto taskDto = defaultTaskDto.toBuilder()
                 .title("test task")
                 .priority(null)
                 .completed(false)
                 .categoryId(1L)
                 .build();
 
-        Task task = Task.builder()
+        Task task = defaultTask.toBuilder()
                 .title(taskDto.getTitle())
-                .category(category)
+                .category(defaultCategory)
                 .build();
 
-        when(categoryRepository.findById(anyLong())).thenReturn(Optional.ofNullable(category));
+        when(categoryRepository.findById(anyLong())).thenReturn(Optional.ofNullable(defaultCategory));
         when(taskRepository.save(any(Task.class))).thenReturn(task);
 
         TaskDto newTask = taskService.addTask(taskDto);
@@ -175,14 +207,16 @@ public class TaskServiceTest {
 
     @Test
     public void TaskService_AddTask_TitleDeadline_ReturnTaskDto(){
-        TaskDto taskDto = TaskDto.builder()
+        TaskDto taskDto = defaultTaskDto.toBuilder()
                 .title("test task")
                 .completed(false)
+                .categoryId(null)
                 .endDate(LocalDateTime.of(2025, Month.FEBRUARY, 28, 6, 0, 0))
                 .build();
 
-        Task task = Task.builder()
+        Task task = defaultTask.toBuilder()
                 .title(taskDto.getTitle())
+                .category(null)
                 .endDate(taskDto.getEndDate())
                 .build();
 
@@ -219,14 +253,15 @@ public class TaskServiceTest {
 
     @Test
     public void TaskService_UpdateTask_Completed_ReturnUpdatedTask(){
-        Task task = Task.builder()
+        Task task = defaultTask.toBuilder()
                 .title("Test Task")
                 .completed(false)
                 .build();
-        TaskDto taskDto = TaskDto.builder()
+        TaskDto taskDto = defaultTaskDto.toBuilder()
                 .completed(true)
                 .build();
         when(taskRepository.findById(anyLong())).thenReturn(Optional.of(task));
+        when(categoryRepository.findById(anyLong())).thenReturn(Optional.of(defaultCategory));
         when(taskRepository.save(any(Task.class))).thenReturn(task);
 
         TaskDto updatedTask = taskService.updateTask(1L, taskDto);
@@ -237,14 +272,14 @@ public class TaskServiceTest {
 
     @Test
     public void TaskService_UpdateTask_Title_ReturnUpdatedTask() {
-        TaskDto newTaskDto = TaskDto.builder()
+        TaskDto newTaskDto = defaultTaskDto.toBuilder()
                 .title("New Title")
                 .priority(null)
                 .completed(false)
                 .categoryId(null)
                 .build();
 
-        Task task = Task.builder()
+        Task task = defaultTask.toBuilder()
                 .title(newTaskDto.getTitle())
                 .build();
 
@@ -259,17 +294,18 @@ public class TaskServiceTest {
 
     @Test
     public void TaskService_UpdateTask_Priority_ReturnUpdatedTask(){
-        TaskDto newTaskDto = TaskDto.builder()
+        TaskDto newTaskDto = defaultTaskDto.toBuilder()
                 .title("task title")
                 .priority(4)
                 .build();
 
-        Task task = Task.builder()
+        Task task = defaultTask.toBuilder()
                 .title("task title")
                 .priority(4)
                 .build();
 
         when(taskRepository.findById(anyLong())).thenReturn(Optional.of(task));
+        when(categoryRepository.findById(anyLong())).thenReturn(Optional.of(defaultCategory));
         when(taskRepository.save(any(Task.class))).thenReturn(task);
 
         TaskDto updatedTask = taskService.updateTask(1L, newTaskDto);
