@@ -52,7 +52,7 @@ public class TaskServiceTest {
         taskDtoCaptor = ArgumentCaptor.forClass(TaskDto.class);
 
         category = Category.builder()
-                .category_id(1L)
+                .categoryId(1L)
                 .name("Home")
                 .build();
     }
@@ -152,7 +152,7 @@ public class TaskServiceTest {
                 .title("test task")
                 .priority(null)
                 .completed(false)
-                .category_id(1L)
+                .categoryId(1L)
                 .build();
 
         Task task = Task.builder()
@@ -169,7 +169,7 @@ public class TaskServiceTest {
         verify(categoryRepository).findById(anyLong());
         Assertions.assertThat(newTask)
                 .isNotNull()
-                .extracting(TaskDto::getTitle, TaskDto::getCategory_id)
+                .extracting(TaskDto::getTitle, TaskDto::getCategoryId)
                 .contains("test task", 1L);
     }
 
@@ -178,12 +178,12 @@ public class TaskServiceTest {
         TaskDto taskDto = TaskDto.builder()
                 .title("test task")
                 .completed(false)
-                .deadline(LocalDateTime.of(2025, Month.FEBRUARY, 28, 6, 0, 0))
+                .endDate(LocalDateTime.of(2025, Month.FEBRUARY, 28, 6, 0, 0))
                 .build();
 
         Task task = Task.builder()
                 .title(taskDto.getTitle())
-                .deadline(taskDto.getDeadline())
+                .endDate(taskDto.getEndDate())
                 .build();
 
         when(taskRepository.save(any(Task.class))).thenReturn(task);
@@ -191,7 +191,7 @@ public class TaskServiceTest {
         TaskDto newTask = taskService.addTask(taskDto);
 
         verify(taskRepository).save(any(Task.class));
-        Assertions.assertThat(newTask.getDeadline())
+        Assertions.assertThat(newTask.getEndDate())
                 .hasMonth(Month.FEBRUARY)
                 .hasDayOfMonth(28)
                 .hasHour(6)
@@ -241,7 +241,7 @@ public class TaskServiceTest {
                 .title("New Title")
                 .priority(null)
                 .completed(false)
-                .category_id(null)
+                .categoryId(null)
                 .build();
 
         Task task = Task.builder()

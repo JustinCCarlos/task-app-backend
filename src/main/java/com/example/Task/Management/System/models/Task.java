@@ -19,7 +19,7 @@ public class Task {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "task_id")
-    private Long task_id;
+    private Long taskId;
 
     @Setter
     @NotBlank(message = "Title is required")
@@ -43,8 +43,17 @@ public class Task {
     private Integer priority = 3;
 
     @Setter
+    @Column(nullable = false)
+    @NotNull(message  = "Start date is required")
+    private LocalDateTime startDate;
+
+    @Setter
     @Column(nullable = true)
-    private LocalDateTime deadline;
+    private LocalDateTime endDate;
+
+    @Setter
+    @Column(nullable = true)
+    private LocalDateTime finishedDate;
 
     @Setter
     @Builder.Default

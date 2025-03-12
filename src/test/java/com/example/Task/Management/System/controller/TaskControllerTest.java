@@ -50,7 +50,7 @@ public class TaskControllerTest {
     @BeforeEach
     public void init() {
         category = Category.builder()
-                .category_id(1L)
+                .categoryId(1L)
                 .name("Home")
                 .build();
 
@@ -62,11 +62,11 @@ public class TaskControllerTest {
                 .build();
 
         taskDto = TaskDto.builder()
-                .task_id(1L)
+                .taskId(1L)
                 .title("test taskDto")
                 .priority(null)
                 .completed(false)
-                .category_id(1L)
+                .categoryId(1L)
                 .build();
     }
 
