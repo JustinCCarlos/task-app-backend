@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityNotFoundException;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -51,7 +52,11 @@ public class TaskService {
             throw new IllegalArgumentException("Priority must be between 1 and 5");
         }
 
-        if(taskDto.getCategoryId() != null){
+        if (taskDto.getStartDate() == null){
+            taskDto.setStartDate(LocalDateTime.now());
+        }
+
+        if (taskDto.getCategoryId() != null){
             Category category = categoryRepository.findById(taskDto.getCategoryId())
                     .orElseThrow(() -> new IllegalArgumentException("Category not found"));
         }
@@ -101,6 +106,11 @@ public class TaskService {
             task.setPriority(taskDto.getPriority());
         }
 
+        if (taskDto.getStartDate() != null && !taskDto.getStartDate().equals(task.getStartDate())){
+            task.setStartDate(taskDto.getStartDate());
+        }
+
+        task.setFinishedDate(taskDto.getFinishedDate());
         task.setEndDate(taskDto.getEndDate());
 
         Task savedTask = taskRepository.save(task);
@@ -122,7 +132,9 @@ public class TaskService {
                 .completed(task.isCompleted())
                 .categoryId((task.getCategory() != null) ? task.getCategory().getCategoryId() : null)
                 .priority(task.getPriority())
+                .startDate(task.getStartDate())
                 .endDate(task.getEndDate())
+                .finishedDate(task.getFinishedDate())
                 .overdue(task.isOverdue())
                 .build();
     }
