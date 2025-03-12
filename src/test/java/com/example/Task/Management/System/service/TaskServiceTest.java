@@ -6,6 +6,8 @@ import com.example.Task.Management.System.models.Category;
 import com.example.Task.Management.System.models.Task;
 import com.example.Task.Management.System.repository.CategoryRepository;
 import com.example.Task.Management.System.repository.TaskRepository;
+import net.bytebuddy.asm.Advice;
+import org.assertj.core.api.Assert;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -14,12 +16,15 @@ import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import javax.persistence.EntityNotFoundException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.Month;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import static org.assertj.core.api.BDDAssertions.within;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.*;
 
@@ -232,6 +237,28 @@ public class TaskServiceTest {
                 .hasMinute(0)
                 .hasSecond(0);
         Assertions.assertThat(newTask.getTitle()).isEqualTo("test task");
+    }
+
+    @Test
+    public void TaskService_AddTask_NullStartDate_ReturnTaskDto(){
+        TaskDto taskDto = defaultTaskDto.toBuilder()
+                .startDate(null)
+                .categoryId(null)
+                .build();
+
+        when(taskRepository.save(any(Task.class))).thenAnswer(invocation -> {
+            return invocation.<Task>getArgument(0);
+        });
+
+        TaskDto newTask = taskService.addTask(taskDto);
+
+        verify(taskRepository).save(taskCaptor.capture());
+        Task savedTask = taskCaptor.getValue();
+
+        Assertions.assertThat(savedTask.getStartDate()).isNotNull();
+        Assertions.assertThat(savedTask.getStartDate()).isCloseTo(LocalDateTime.now(), within(1, ChronoUnit.SECONDS));
+        Assertions.assertThat(newTask.getStartDate()).isEqualTo(savedTask.getStartDate());
+
     }
 
 //    @Test
