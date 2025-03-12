@@ -87,8 +87,8 @@ public class TaskControllerTest {
     @Test
     public void TaskController_GetAllTasks_ReturnListOfTasks() throws Exception {
         List<TaskDto> taskDtos = List.of(
-                taskDto,
-                taskDto
+                defaultTaskDto,
+                defaultTaskDto
         );
 
         when(taskService.getAllTasks()).thenReturn(taskDtos);
@@ -101,13 +101,13 @@ public class TaskControllerTest {
 
     @Test
     public void TaskController_CreateTask_ReturnCreated() throws Exception {
-        when(taskService.addTask(any(TaskDto.class))).thenReturn(taskDto);
+        when(taskService.addTask(any(TaskDto.class))).thenReturn(defaultTaskDto);
 
         MvcResult result = mockMvc.perform(post("/api/tasks")
                 .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(taskDto)))
-                .andExpect(jsonPath("$.task_id").value(1L))
-                .andExpect(jsonPath("$.title").value("test taskDto"))
+                .content(objectMapper.writeValueAsString(defaultTaskDto)))
+                .andExpect(jsonPath("$.taskId").value(1L))
+                .andExpect(jsonPath("$.title").value("Default Task"))
                 .andExpect(status().isCreated())
                 .andReturn();
 
