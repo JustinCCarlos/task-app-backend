@@ -48,6 +48,8 @@ public class TaskService {
     }
 
     public TaskDto addTask(TaskDto taskDto) {
+        Category category = null;
+
         if ((taskDto.getPriority() < 1 || taskDto.getPriority() > 5)){
             throw new IllegalArgumentException("Priority must be between 1 and 5");
         }
@@ -57,13 +59,15 @@ public class TaskService {
         }
 
         if (taskDto.getCategoryId() != null){
-            Category category = categoryRepository.findById(taskDto.getCategoryId())
+            category = categoryRepository.findById(taskDto.getCategoryId())
                     .orElseThrow(() -> new IllegalArgumentException("Category not found"));
         }
 
         Task newTask = Task.builder()
                 .title(taskDto.getTitle())
+                .category(category)
                 .priority(taskDto.getPriority())
+                .startDate(taskDto.getStartDate())
                 .endDate(taskDto.getEndDate())
                 .build();
 
