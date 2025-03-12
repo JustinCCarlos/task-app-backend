@@ -13,9 +13,6 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.MvcResult;
-
-import javax.print.attribute.standard.Media;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.verify;
@@ -43,7 +40,7 @@ public class CategoryControllerTest {
     @Test
     public void CategoryController_CreateCategory_ReturnCreated() throws Exception{
         CategoryDto categoryDto = CategoryDto.builder()
-                .category_id(1L)
+                .categoryId(1L)
                 .name("Test categoryDto")
                 .build();
 
@@ -62,7 +59,7 @@ public class CategoryControllerTest {
     @Test
     public void CategoryController_UpdateCategory_ReturnUpdated() throws Exception {
         CategoryDto newCategoryDto = CategoryDto.builder()
-                .category_id(1L)
+                .categoryId(1L)
                 .name("New categoryDto")
                 .build();
 

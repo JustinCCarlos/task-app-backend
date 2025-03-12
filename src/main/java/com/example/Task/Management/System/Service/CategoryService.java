@@ -1,7 +1,6 @@
 package com.example.Task.Management.System.Service;
 
 import com.example.Task.Management.System.DTO.CategoryDto;
-import com.example.Task.Management.System.DTO.TaskDto;
 import com.example.Task.Management.System.models.Category;
 import com.example.Task.Management.System.repository.CategoryRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -64,7 +63,7 @@ public class CategoryService {
 
     private CategoryDto convertToCategoryDto(Category category){
         return CategoryDto.builder()
-                .category_id(category.getCategory_id())
+                .categoryId(category.getCategoryId())
                 .name(category.getName())
                 .build();
     }

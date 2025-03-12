@@ -1,10 +1,8 @@
 package com.example.Task.Management.System.repository;
 
 import com.example.Task.Management.System.models.Task;
-import org.assertj.core.api.Assert;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.jdbc.EmbeddedDatabaseConnection;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
@@ -29,7 +27,7 @@ public class TaskRepositoryTest {
 
         taskRepository.save(task);
 
-        Task retrievedTask = taskRepository.findById(task.getTask_id()).get();
+        Task retrievedTask = taskRepository.findById(task.getTaskId()).get();
 
         Assertions.assertThat(retrievedTask).isNotNull();
         Assertions.assertThat(retrievedTask.getTitle())
@@ -45,7 +43,7 @@ public class TaskRepositoryTest {
         Task savedTask = taskRepository.save(task);
 
         Assertions.assertThat(savedTask).isNotNull();
-        Assertions.assertThat(savedTask.getTask_id()).isGreaterThan(0L);
+        Assertions.assertThat(savedTask.getTaskId()).isGreaterThan(0L);
 
     }
 
@@ -56,9 +54,9 @@ public class TaskRepositoryTest {
                 .build();
 
         taskRepository.save(task);
-        taskRepository.deleteById(task.getTask_id());
+        taskRepository.deleteById(task.getTaskId());
 
-        Task returnTask = taskRepository.findById(task.getTask_id()).orElse(null);
+        Task returnTask = taskRepository.findById(task.getTaskId()).orElse(null);
 
         Assertions.assertThat(returnTask).isNull();
 
@@ -169,7 +167,7 @@ public class TaskRepositoryTest {
 
         taskRepository.save(task);
 
-        Task updatedTask = taskRepository.findById(task.getTask_id()).orElseThrow();
+        Task updatedTask = taskRepository.findById(task.getTaskId()).orElseThrow();
         updatedTask.setCompleted(!task.isCompleted());
         updatedTask = taskRepository.save(updatedTask);
 
