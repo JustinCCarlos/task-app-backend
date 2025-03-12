@@ -19,11 +19,14 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
 
+import javax.persistence.EntityNotFoundException;
+import java.time.LocalDateTime;
+import java.time.Month;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -41,40 +44,51 @@ public class TaskControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    private Task task;
+    private Task defaultTask;
 
-    private TaskDto taskDto;
+    private TaskDto defaultTaskDto;
 
-    private Category category;
+    private Category defaultCategory;
 
     @BeforeEach
     public void init() {
-        category = Category.builder()
-                .category_id(1L)
+        LocalDateTime defaultStartDate = LocalDateTime.of(2026, Month.FEBRUARY, 27,0,0);
+
+        defaultCategory = Category.builder()
+                .categoryId(1L)
                 .name("Home")
                 .build();
 
-        task = Task.builder()
-                .title("test task")
-                .priority(3)
+        defaultTask = Task.builder()
+                .taskId(1L)
+                .title("Default Task")
                 .completed(false)
-                .category(null)
+                .category(defaultCategory)
+                .priority(3)
+                .startDate(defaultStartDate)
+                .endDate(null)
+                .finishedDate(null)
+                .overdue(false)
                 .build();
 
-        taskDto = TaskDto.builder()
-                .task_id(1L)
-                .title("test taskDto")
-                .priority(null)
-                .completed(false)
-                .category_id(1L)
+        defaultTaskDto = TaskDto.builder()
+                .taskId(defaultTask.getTaskId())
+                .title(defaultTask.getTitle())
+                .completed(defaultTask.isCompleted())
+                .categoryId(defaultTask.getCategory().getCategoryId())
+                .priority(defaultTask.getPriority())
+                .startDate(defaultTask.getStartDate())
+                .endDate(defaultTask.getEndDate())
+                .finishedDate(defaultTask.getFinishedDate())
+                .overdue(defaultTask.isOverdue())
                 .build();
     }
 
     @Test
     public void TaskController_GetAllTasks_ReturnListOfTasks() throws Exception {
         List<TaskDto> taskDtos = List.of(
-                taskDto,
-                taskDto
+                defaultTaskDto,
+                defaultTaskDto
         );
 
         when(taskService.getAllTasks()).thenReturn(taskDtos);
@@ -87,13 +101,13 @@ public class TaskControllerTest {
 
     @Test
     public void TaskController_CreateTask_ReturnCreated() throws Exception {
-        when(taskService.addTask(any(TaskDto.class))).thenReturn(taskDto);
+        when(taskService.addTask(any(TaskDto.class))).thenReturn(defaultTaskDto);
 
         MvcResult result = mockMvc.perform(post("/api/tasks")
                 .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(taskDto)))
-                .andExpect(jsonPath("$.task_id").value(1L))
-                .andExpect(jsonPath("$.title").value("test taskDto"))
+                .content(objectMapper.writeValueAsString(defaultTaskDto)))
+                .andExpect(jsonPath("$.taskId").value(1L))
+                .andExpect(jsonPath("$.title").value("Default Task"))
                 .andExpect(status().isCreated())
                 .andReturn();
 
@@ -102,6 +116,59 @@ public class TaskControllerTest {
         verify(taskService).addTask(any(TaskDto.class));
     }
 
+    @Test
+    public void TaskController_CreateTask_NullStartDate_ReturnsCreated() throws Exception {
+        TaskDto taskDto = defaultTaskDto.toBuilder().startDate(null).build();
+        TaskDto savedTaskDto = defaultTaskDto.toBuilder().startDate(LocalDateTime.now()).build();
 
+        when(taskService.addTask(any(TaskDto.class))).thenReturn(savedTaskDto);
+
+        mockMvc.perform(post("/api/tasks")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(taskDto)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.startDate").exists());
+
+        verify(taskService).addTask(any(TaskDto.class));
+
+    }
+
+    @Test
+    public void TaskController_UpdateTask_Title_ReturnsUpdatedTask() throws Exception {
+        Long taskId = 1L;
+        TaskDto updatedTaskDto = defaultTaskDto.toBuilder().title("Updated Task").build();
+
+        when(taskService.updateTask(eq(taskId),any(TaskDto.class))).thenReturn(updatedTaskDto);
+
+        mockMvc.perform(put("/api/tasks/{id}", taskId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(updatedTaskDto)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.title").value("Updated Task"));
+
+
+    }
+
+    @Test
+    public void TaskController_DeleteTask_ReturnResponseEntityOk() throws Exception {
+        Long taskId = 1L;
+
+        doNothing().when(taskService).deleteTask(taskId);
+
+        mockMvc.perform(delete("/api/tasks/{id}", taskId))
+                .andExpect(status().isOk());
+
+        verify(taskService).deleteTask(taskId);
+    }
+
+    @Test
+    public void TaskController_GetTaskById_NotFound() throws Exception {
+        Long invalidId = 99L;
+
+        when(taskService.getTaskById(invalidId)).thenThrow(new EntityNotFoundException("Task not found with id: " + invalidId));
+
+        mockMvc.perform(get("/api/tasks/{id}", invalidId))
+                .andExpect(status().isNotFound());
+    }
 
 }

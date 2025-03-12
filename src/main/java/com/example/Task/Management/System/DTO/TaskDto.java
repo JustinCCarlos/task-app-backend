@@ -11,16 +11,16 @@ import java.time.LocalDateTime;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@Builder
+@Builder(toBuilder = true)
 public class TaskDto {
-    private Long task_id;
+    private Long taskId;
 
     @NotBlank(message = "Title cannot be empty")
     @Size(min = 3, max = 50, message = "Title must be between 3 and 50 characters")
     private String title;
 
     private boolean completed;
-    private Long category_id;
+    private Long categoryId;
 
     @Min(value = 1, message = "Priority must be at least 1")
     @Max(value = 5, message = "Priority must be at most 5")
@@ -28,7 +28,9 @@ public class TaskDto {
     private Integer priority = 3;
     //use if needed to specify date format
     //@JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'") where Z represents UTC
-    private LocalDateTime deadline;
+    private LocalDateTime startDate;
+    private LocalDateTime endDate;
+    private LocalDateTime finishedDate;
     private boolean overdue;
 
     //removes null value to allow default to work

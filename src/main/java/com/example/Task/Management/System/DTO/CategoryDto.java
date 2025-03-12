@@ -10,7 +10,7 @@ import lombok.*;
 @NoArgsConstructor
 @Builder
 public class CategoryDto {
-    private Long category_id;
+    private Long categoryId;
 
     @Setter
     @Column(nullable = false, unique = true)

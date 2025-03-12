@@ -6,6 +6,8 @@ import com.example.Task.Management.System.models.Category;
 import com.example.Task.Management.System.models.Task;
 import com.example.Task.Management.System.repository.CategoryRepository;
 import com.example.Task.Management.System.repository.TaskRepository;
+import net.bytebuddy.asm.Advice;
+import org.assertj.core.api.Assert;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -14,12 +16,15 @@ import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import javax.persistence.EntityNotFoundException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.Month;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import static org.assertj.core.api.BDDAssertions.within;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.*;
 
@@ -44,26 +49,56 @@ public class TaskServiceTest {
     @Captor
     private ArgumentCaptor<TaskDto> taskDtoCaptor;
 
-    private Category category;
+    private Category defaultCategory;
+    private Task defaultTask;
+    private TaskDto defaultTaskDto;
 
     @BeforeEach
     public void init() {
         taskCaptor = ArgumentCaptor.forClass(Task.class);
         taskDtoCaptor = ArgumentCaptor.forClass(TaskDto.class);
 
-        category = Category.builder()
-                .category_id(1L)
+        LocalDateTime defaultStartDate = LocalDateTime.of(2026, Month.FEBRUARY, 27,0,0);
+        LocalDateTime defaultEndDate = LocalDateTime.of(2026, Month.MARCH, 30,0,0);
+        LocalDateTime defaultFinished = LocalDateTime.of(2026, Month.MARCH, 15,0,0);
+
+        defaultCategory = Category.builder()
+                .categoryId(1L)
                 .name("Home")
+                .build();
+
+        defaultTask = Task.builder()
+                .taskId(1L)
+                .title("Default Task")
+                .completed(false)
+                .category(defaultCategory)
+                .priority(3)
+                .startDate(defaultStartDate)
+                .endDate(null)
+                .finishedDate(null)
+                .overdue(false)
+                .build();
+
+        defaultTaskDto = TaskDto.builder()
+                .taskId(defaultTask.getTaskId())
+                .title(defaultTask.getTitle())
+                .completed(defaultTask.isCompleted())
+                .categoryId(defaultTask.getCategory().getCategoryId())
+                .priority(defaultTask.getPriority())
+                .startDate(defaultTask.getStartDate())
+                .endDate(defaultTask.getEndDate())
+                .finishedDate(defaultTask.getFinishedDate())
+                .overdue(defaultTask.isOverdue())
                 .build();
     }
 
     @Test
     public void TaskService_GetAllTask_ReturnAllTaskDto(){
-        Task task1 = Task.builder()
+        Task task1 = defaultTask.toBuilder()
                 .title("task1").build();
-        Task task2 = Task.builder()
+        Task task2 = defaultTask.toBuilder()
                 .title("task2").build();
-        Task task3 = Task.builder()
+        Task task3 = defaultTask.toBuilder()
                 .title("task3").build();
 
         List<Task> tasks = new ArrayList<>();
@@ -83,7 +118,7 @@ public class TaskServiceTest {
 
     @Test
     public void TaskService_GetTaskById_ReturnTask() {
-        Task task = Task.builder()
+        Task task = defaultTask.toBuilder()
                 .title("test task")
                 .build();
 
@@ -106,10 +141,10 @@ public class TaskServiceTest {
 
     @Test
     public void TaskService_GetTaskContaining_ReturnListOfTaskDto() {
-        Task task1 = Task.builder()
+        Task task1 = defaultTask.toBuilder()
                 .title("to be found 1")
                 .build();
-        Task task2 = Task.builder()
+        Task task2 = defaultTask.toBuilder()
                 .title("to be founded 2")
                 .build();
 
@@ -127,13 +162,15 @@ public class TaskServiceTest {
     }
 
     @Test
-    public void TaskService_AddTask_TitleNullPriority_ReturnTaskDto(){
-        TaskDto taskDto = TaskDto.builder()
+    public void TaskService_AddTask_NullPriority_ReturnTaskDto(){
+        TaskDto taskDto = defaultTaskDto.toBuilder()
                 .title("title")
+                .categoryId(null)
                 .build();
 
-        Task task = Task.builder()
+        Task task = defaultTask.toBuilder()
                 .title(taskDto.getTitle())
+                .category(null)
                 .build();
 
         when(taskRepository.save(any(Task.class))).thenReturn(task);
@@ -148,19 +185,19 @@ public class TaskServiceTest {
 
     @Test
     public void TaskService_AddTask_TitleCategory_ReturnTaskDto(){
-        TaskDto taskDto = TaskDto.builder()
+        TaskDto taskDto = defaultTaskDto.toBuilder()
                 .title("test task")
                 .priority(null)
                 .completed(false)
-                .category_id(1L)
+                .categoryId(1L)
                 .build();
 
-        Task task = Task.builder()
+        Task task = defaultTask.toBuilder()
                 .title(taskDto.getTitle())
-                .category(category)
+                .category(defaultCategory)
                 .build();
 
-        when(categoryRepository.findById(anyLong())).thenReturn(Optional.ofNullable(category));
+        when(categoryRepository.findById(anyLong())).thenReturn(Optional.ofNullable(defaultCategory));
         when(taskRepository.save(any(Task.class))).thenReturn(task);
 
         TaskDto newTask = taskService.addTask(taskDto);
@@ -169,21 +206,23 @@ public class TaskServiceTest {
         verify(categoryRepository).findById(anyLong());
         Assertions.assertThat(newTask)
                 .isNotNull()
-                .extracting(TaskDto::getTitle, TaskDto::getCategory_id)
+                .extracting(TaskDto::getTitle, TaskDto::getCategoryId)
                 .contains("test task", 1L);
     }
 
     @Test
     public void TaskService_AddTask_TitleDeadline_ReturnTaskDto(){
-        TaskDto taskDto = TaskDto.builder()
+        TaskDto taskDto = defaultTaskDto.toBuilder()
                 .title("test task")
                 .completed(false)
-                .deadline(LocalDateTime.of(2025, Month.FEBRUARY, 28, 6, 0, 0))
+                .categoryId(null)
+                .endDate(LocalDateTime.of(2025, Month.FEBRUARY, 28, 6, 0, 0))
                 .build();
 
-        Task task = Task.builder()
+        Task task = defaultTask.toBuilder()
                 .title(taskDto.getTitle())
-                .deadline(taskDto.getDeadline())
+                .category(null)
+                .endDate(taskDto.getEndDate())
                 .build();
 
         when(taskRepository.save(any(Task.class))).thenReturn(task);
@@ -191,13 +230,35 @@ public class TaskServiceTest {
         TaskDto newTask = taskService.addTask(taskDto);
 
         verify(taskRepository).save(any(Task.class));
-        Assertions.assertThat(newTask.getDeadline())
+        Assertions.assertThat(newTask.getEndDate())
                 .hasMonth(Month.FEBRUARY)
                 .hasDayOfMonth(28)
                 .hasHour(6)
                 .hasMinute(0)
                 .hasSecond(0);
         Assertions.assertThat(newTask.getTitle()).isEqualTo("test task");
+    }
+
+    @Test
+    public void TaskService_AddTask_NullStartDate_ReturnTaskDto(){
+        TaskDto taskDto = defaultTaskDto.toBuilder()
+                .startDate(null)
+                .categoryId(null)
+                .build();
+
+        when(taskRepository.save(any(Task.class))).thenAnswer(invocation -> {
+            return invocation.<Task>getArgument(0);
+        });
+
+        TaskDto newTask = taskService.addTask(taskDto);
+
+        verify(taskRepository).save(taskCaptor.capture());
+        Task savedTask = taskCaptor.getValue();
+
+        Assertions.assertThat(savedTask.getStartDate()).isNotNull();
+        Assertions.assertThat(savedTask.getStartDate()).isCloseTo(LocalDateTime.now(), within(1, ChronoUnit.SECONDS));
+        Assertions.assertThat(newTask.getStartDate()).isEqualTo(savedTask.getStartDate());
+
     }
 
 //    @Test
@@ -219,14 +280,15 @@ public class TaskServiceTest {
 
     @Test
     public void TaskService_UpdateTask_Completed_ReturnUpdatedTask(){
-        Task task = Task.builder()
+        Task task = defaultTask.toBuilder()
                 .title("Test Task")
                 .completed(false)
                 .build();
-        TaskDto taskDto = TaskDto.builder()
+        TaskDto taskDto = defaultTaskDto.toBuilder()
                 .completed(true)
                 .build();
         when(taskRepository.findById(anyLong())).thenReturn(Optional.of(task));
+        when(categoryRepository.findById(anyLong())).thenReturn(Optional.of(defaultCategory));
         when(taskRepository.save(any(Task.class))).thenReturn(task);
 
         TaskDto updatedTask = taskService.updateTask(1L, taskDto);
@@ -237,14 +299,14 @@ public class TaskServiceTest {
 
     @Test
     public void TaskService_UpdateTask_Title_ReturnUpdatedTask() {
-        TaskDto newTaskDto = TaskDto.builder()
+        TaskDto newTaskDto = defaultTaskDto.toBuilder()
                 .title("New Title")
                 .priority(null)
                 .completed(false)
-                .category_id(null)
+                .categoryId(null)
                 .build();
 
-        Task task = Task.builder()
+        Task task = defaultTask.toBuilder()
                 .title(newTaskDto.getTitle())
                 .build();
 
@@ -259,17 +321,18 @@ public class TaskServiceTest {
 
     @Test
     public void TaskService_UpdateTask_Priority_ReturnUpdatedTask(){
-        TaskDto newTaskDto = TaskDto.builder()
+        TaskDto newTaskDto = defaultTaskDto.toBuilder()
                 .title("task title")
                 .priority(4)
                 .build();
 
-        Task task = Task.builder()
+        Task task = defaultTask.toBuilder()
                 .title("task title")
                 .priority(4)
                 .build();
 
         when(taskRepository.findById(anyLong())).thenReturn(Optional.of(task));
+        when(categoryRepository.findById(anyLong())).thenReturn(Optional.of(defaultCategory));
         when(taskRepository.save(any(Task.class))).thenReturn(task);
 
         TaskDto updatedTask = taskService.updateTask(1L, newTaskDto);

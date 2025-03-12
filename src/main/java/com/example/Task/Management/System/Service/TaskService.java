@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityNotFoundException;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -47,19 +48,27 @@ public class TaskService {
     }
 
     public TaskDto addTask(TaskDto taskDto) {
+        Category category = null;
+
         if ((taskDto.getPriority() < 1 || taskDto.getPriority() > 5)){
             throw new IllegalArgumentException("Priority must be between 1 and 5");
         }
 
-        if(taskDto.getCategory_id() != null){
-            Category category = categoryRepository.findById(taskDto.getCategory_id())
+        if (taskDto.getStartDate() == null){
+            taskDto.setStartDate(LocalDateTime.now());
+        }
+
+        if (taskDto.getCategoryId() != null){
+            category = categoryRepository.findById(taskDto.getCategoryId())
                     .orElseThrow(() -> new IllegalArgumentException("Category not found"));
         }
 
         Task newTask = Task.builder()
                 .title(taskDto.getTitle())
+                .category(category)
                 .priority(taskDto.getPriority())
-                .deadline(taskDto.getDeadline())
+                .startDate(taskDto.getStartDate())
+                .endDate(taskDto.getEndDate())
                 .build();
 
         Task savedTask = taskRepository.save(newTask);
@@ -86,8 +95,8 @@ public class TaskService {
             task.setTitle(taskDto.getTitle());
         }
 
-        if(taskDto.getCategory_id() != null){
-            Category category = categoryRepository.findById(taskDto.getCategory_id())
+        if(taskDto.getCategoryId() != null){
+            Category category = categoryRepository.findById(taskDto.getCategoryId())
                     .orElseThrow(() -> new IllegalArgumentException("Category not found"));
             task.setCategory(category);
         } else {
@@ -101,7 +110,12 @@ public class TaskService {
             task.setPriority(taskDto.getPriority());
         }
 
-        task.setDeadline(taskDto.getDeadline());
+        if (taskDto.getStartDate() != null && !taskDto.getStartDate().equals(task.getStartDate())){
+            task.setStartDate(taskDto.getStartDate());
+        }
+
+        task.setFinishedDate(taskDto.getFinishedDate());
+        task.setEndDate(taskDto.getEndDate());
 
         Task savedTask = taskRepository.save(task);
 
@@ -117,15 +131,16 @@ public class TaskService {
 
     private TaskDto convertToTaskDto(Task task){
         return TaskDto.builder()
-                .task_id(task.getTask_id())
+                .taskId(task.getTaskId())
                 .title(task.getTitle())
                 .completed(task.isCompleted())
-                .category_id((task.getCategory() != null) ? task.getCategory().getCategory_id() : null)
+                .categoryId((task.getCategory() != null) ? task.getCategory().getCategoryId() : null)
                 .priority(task.getPriority())
-                .deadline(task.getDeadline())
+                .startDate(task.getStartDate())
+                .endDate(task.getEndDate())
+                .finishedDate(task.getFinishedDate())
                 .overdue(task.isOverdue())
                 .build();
-        //return new TaskDto(task.getTask_id(), task.getTitle(), task.isCompleted(), task.getCategory().getCategory_id(), task.getPriority(), task.getDeadline(), task.isOverdue());
     }
 
 //    private Task convertToEntity(TaskDto taskDto){
