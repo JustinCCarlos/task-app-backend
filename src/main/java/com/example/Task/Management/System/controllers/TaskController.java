@@ -2,7 +2,9 @@ package com.example.Task.Management.System.controllers;
 
 import com.example.Task.Management.System.DTO.TaskDto;
 import com.example.Task.Management.System.Service.TaskService;
+import com.example.Task.Management.System.models.Task;
 import jakarta.validation.Valid;
+import org.apache.coyote.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
@@ -31,20 +33,23 @@ public class TaskController {
 
     // List all tasks
     @GetMapping
-    public List<TaskDto> getAllTasks(){
-        return taskService.getAllTasks();
+    public ResponseEntity<List<TaskDto>> getAllTasks(){
+        List<TaskDto> taskDto = taskService.getAllTasks();
+        return ResponseEntity.ok(taskDto);
     }
 
     // Get a single task by ID
     @GetMapping("/{id}")
-    public TaskDto getTaskById(@PathVariable Long id){
-        return taskService.getTaskById(id);
+    public ResponseEntity<TaskDto> getTaskById(@PathVariable Long id){
+        TaskDto taskDto = taskService.getTaskById(id);
+        return ResponseEntity.ok(taskDto);
     }
 
     // Get a list of task that contains searched string
     @GetMapping("/Search")
-    public List<TaskDto> getTaskContaining(@RequestParam("query") String query) {
-        return taskService.getTaskContaining(query);
+    public ResponseEntity<List<TaskDto>> getTaskContaining(@RequestParam("query") String query) {
+        List<TaskDto> taskDtos = taskService.getTaskContaining(query);
+        return ResponseEntity.ok(taskDtos);
     }
 
     @PutMapping("/{id}")
