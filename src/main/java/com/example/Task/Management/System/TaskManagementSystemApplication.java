@@ -8,11 +8,11 @@ import org.springframework.context.annotation.Bean;
 /*
 	TODO:: Add case-sensitive search
 	       Add exact word search
-	       Add categories
-	       Add priority
-	       Add finish task by time set
+	       -Add categories
+	       -Add priority
+	       -Add finish task by time set
 	       Add recurring task
-	       Write controller test
+	       -Write controller test
 	       Use JaCoCo or IDE coverage tools to check if I missed anything
 
  */

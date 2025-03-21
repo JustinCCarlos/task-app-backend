@@ -6,6 +6,8 @@ import com.example.Task.Management.System.repository.CategoryRepository;
 import com.example.Task.Management.System.repository.TaskRepository;
 import com.example.Task.Management.System.models.Task;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityNotFoundException;
@@ -30,7 +32,6 @@ public class TaskService {
         return tasks.stream()
                 .map(this::convertToTaskDto)
                 .collect(Collectors.toList());
-//        return taskRepository.findAll();
     }
 
     public TaskDto getTaskById(Long id){
@@ -38,8 +39,6 @@ public class TaskService {
                 .orElseThrow(() -> new EntityNotFoundException("Task not found with id: " + id));
 
         return convertToTaskDto(task);
-//        return taskRepository.findById(id)
-//                .orElseThrow(() -> new EntityNotFoundException("Task not found with id: " + id));
     }
 
     public List<TaskDto> getTaskContaining(String toSearch) {
@@ -76,15 +75,6 @@ public class TaskService {
         return convertToTaskDto(savedTask);
     }
 
-//    public TaskDto updateTaskCompleted(Long id){
-//        Task task = taskRepository.findById(id)
-//                .orElseThrow(() -> new EntityNotFoundException("Task not found with id: " + id));
-//        task.setCompleted(!task.isCompleted());
-//        taskRepository.save(task);
-//
-//        return convertToTaskDto(task);
-//    }
-
     public TaskDto updateTask(Long id, TaskDto taskDto){
         Task task = taskRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Task not found with id: " + id));
@@ -120,6 +110,35 @@ public class TaskService {
         Task savedTask = taskRepository.save(task);
 
         return convertToTaskDto(savedTask);
+    }
+
+    public List<TaskDto> getFilteredTasks(Boolean isComplete, String title, String sortBy, String sortDirection, LocalDateTime startDate, LocalDateTime endDate){
+        Specification<Task> spec = Specification.where(null);
+
+        if (isComplete != null) {
+            spec = spec.and((root, query, cb) -> cb.equal(root.get("completed"), isComplete));
+        }
+
+        if (title != null && !title.isEmpty()) {
+            spec = spec.and((root, query, cb) -> cb.like(cb.lower(root.get("title")), "%" + title.toLowerCase() + "%"));
+        }
+
+        if (startDate != null) {
+            spec = spec.and((root, query, cb) -> cb.greaterThanOrEqualTo(root.get("startDate"), startDate));
+        }
+
+        if (endDate != null) {
+            spec = spec.and((root, query, cb) -> cb.lessThanOrEqualTo(root.get("endDate"), endDate));
+        }
+
+        Sort sort = Sort.unsorted();
+
+        if (sortBy != null && !sortBy.isEmpty()){
+            sort = sortDirection != null && sortDirection.equalsIgnoreCase("desc") ? Sort.by(sortBy).descending() : Sort.by(sortBy).ascending();
+        }
+
+        List<Task> tasks = taskRepository.findAll(spec, sort);
+        return tasks.stream().map(this::convertToTaskDto).toList();
     }
 
     public void deleteTask(Long id){
