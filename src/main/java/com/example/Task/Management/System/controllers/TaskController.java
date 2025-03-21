@@ -4,10 +4,12 @@ import com.example.Task.Management.System.DTO.TaskDto;
 import com.example.Task.Management.System.Service.TaskService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
@@ -49,6 +51,19 @@ public class TaskController {
     public ResponseEntity<TaskDto> updateTask(@PathVariable Long id, @Valid @RequestBody TaskDto taskDto){
         TaskDto updatedTask = taskService.updateTask(id, taskDto);
         return ResponseEntity.ok(updatedTask);
+    }
+
+    @GetMapping("/filter")
+    public ResponseEntity<List<TaskDto>> getFilteredTasks(
+            @RequestParam(required = false) Boolean isComplete,
+            @RequestParam(required = false) String title,
+            @RequestParam(required = false) String sortBy,
+            @RequestParam(required = false) String sortDirection,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate
+    ){
+        List<TaskDto> filteredTasks = taskService.getFilteredTasks(isComplete, title, sortBy, sortDirection, startDate, endDate);
+        return ResponseEntity.ok(filteredTasks);
     }
 
     //Delete a task
