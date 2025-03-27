@@ -1,0 +1,44 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:pro="http://www.liquibase.org/xml/ns/pro" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/pro http://www.liquibase.org/xml/ns/pro/liquibase-pro-latest.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet author="Justin (generated)" id="1743072092081-1">
+        <createTable tableName="categories">
+            <column autoIncrement="true" name="category_id" type="BIGINT">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="name" type="VARCHAR(50)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet author="Justin (generated)" id="1743072092081-2">
+        <createTable tableName="tasks">
+            <column autoIncrement="true" name="task_id" type="BIGINT">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="completed" type="BIT(1)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="end_date" type="datetime(6)"/>
+            <column name="finished_date" type="datetime(6)"/>
+            <column name="overdue" type="BIT(1)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="priority" type="INT"/>
+            <column name="start_date" type="datetime(6)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="title" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="category_id" type="BIGINT"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="Justin (generated)" id="1743072092081-3">
+        <createIndex associatedWith="" indexName="FK19nbrmutuqhlidppwns1wmfro" tableName="tasks">
+            <column name="category_id"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="Justin (generated)" id="1743072092081-4">
+        <addForeignKeyConstraint baseColumnNames="category_id" baseTableName="tasks" constraintName="FK19nbrmutuqhlidppwns1wmfro" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="category_id" referencedTableName="categories" validate="true"/>
+    </changeSet>
+</databaseChangeLog>

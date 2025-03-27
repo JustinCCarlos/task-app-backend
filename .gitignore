@@ -21,6 +21,7 @@ target/
 *.iws
 *.iml
 *.ipr
+/src/main/resources/env.properties
 
 ### NetBeans ###
 /nbproject/private/
@@ -34,3 +35,5 @@ build/
 
 ### VS Code ###
 .vscode/
+
+/src/main/resources/liquibase.properties
