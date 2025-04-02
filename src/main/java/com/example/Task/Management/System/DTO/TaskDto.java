@@ -32,6 +32,7 @@ public class TaskDto {
     private LocalDateTime endDate;
     private LocalDateTime finishedDate;
     private boolean overdue;
+    private Long taskRecurrenceId;
 
     //removes null value to allow default to work
     public static class TaskDtoBuilder{
