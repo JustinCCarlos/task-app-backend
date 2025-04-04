@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityNotFoundException;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -29,6 +30,11 @@ public class CategoryService {
     public List<CategoryDto> findByName(String toSearch){
         List<Category> categories = categoryRepository.findByNameContaining(toSearch);
         return categories.stream().map(this::convertToCategoryDto).collect(Collectors.toList());
+    }
+
+    public Category findById(long id){
+        return categoryRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Category not found"));
     }
 
     public CategoryDto createCategory(CategoryDto categoryDto){

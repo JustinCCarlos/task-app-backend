@@ -1,10 +1,8 @@
 package com.example.Task.Management.System.controllers;
 
-import com.example.Task.Management.System.DTO.TaskDto;
+import com.example.Task.Management.System.DTO.Task.TaskDto;
 import com.example.Task.Management.System.Service.TaskService;
-import com.example.Task.Management.System.models.Task;
 import jakarta.validation.Valid;
-import org.apache.coyote.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;

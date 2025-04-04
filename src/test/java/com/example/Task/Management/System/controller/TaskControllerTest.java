@@ -1,7 +1,7 @@
 package com.example.Task.Management.System.controller;
 
-import com.example.Task.Management.System.DTO.TaskDto;
-import com.example.Task.Management.System.Service.TaskService;
+import com.example.Task.Management.System.DTO.Task.TaskDto;
+import com.example.Task.Management.System.Service.Implementation.TaskServiceImpl;
 import com.example.Task.Management.System.controllers.TaskController;
 import com.example.Task.Management.System.models.Category;
 import com.example.Task.Management.System.models.Task;
@@ -39,7 +39,7 @@ public class TaskControllerTest {
     private MockMvc mockMvc;
 
     @MockitoBean
-    private TaskService taskService;
+    private TaskServiceImpl taskService;
 
     @Autowired
     private ObjectMapper objectMapper;
