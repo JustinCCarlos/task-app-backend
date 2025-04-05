@@ -36,11 +36,14 @@ public class TaskRecurrence {
     private int interval;
 
     @NotNull
-    @Column(name = "start_date", nullable = false)
-    private LocalDateTime startDate;
+    @Column(name = "recurrence_start_date", nullable = false)
+    private LocalDateTime recurrenceStartDate;
 
-    @Column(name = "end_date")
-    private LocalDateTime endDate;
+    @Embedded
+    private TaskDuration taskDuration;
+
+    @Column(name = "end_recurrence_date")
+    private LocalDateTime recurrenceEndDate;
 
     @Min(value = 1, message = "Max occurrences must be at least 1")
     @Column(name = "max_occurrences")
@@ -56,7 +59,7 @@ public class TaskRecurrence {
 
     @AssertTrue(message = "Either endDate or maxOccurrences should be set, but not both")
     private boolean isEndDateOrMaxOccurrencesValid() {
-        return (endDate != null) ^ (maxOccurrences != null); // XOR ensures only one is set
+        return (recurrenceEndDate != null) ^ (maxOccurrences != null); // XOR ensures only one is set
     }
 
 }

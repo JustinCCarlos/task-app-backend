@@ -8,8 +8,9 @@ public class TaskRecurrenceMapper {
                 entity.getTaskRecurrenceId(),
                 entity.getRecurrenceType(),
                 entity.getInterval(),
-                entity.getStartDate(),
-                entity.getEndDate(),
+                entity.getRecurrenceStartDate(),
+                entity.getTaskDuration(),
+                entity.getRecurrenceEndDate(),
                 entity.getMaxOccurrences(),
                 entity.getActive(),
                 entity.getRecurrencePattern()
@@ -20,8 +21,9 @@ public class TaskRecurrenceMapper {
         return TaskRecurrence.builder()
                 .recurrenceType(dto.recurrenceType())
                 .interval(dto.interval())
-                .startDate(dto.startDate())
-                .endDate(dto.endDate())
+                .recurrenceStartDate(dto.recurrenceStartDate())
+                .taskDuration(dto.taskDuration())
+                .recurrenceEndDate(dto.recurrenceEndDate())
                 .maxOccurrences(dto.maxOccurrences())
                 .active(dto.active() != null ? dto.active() : true) // Default to true if null
                 .recurrencePattern(dto.recurrencePattern())
