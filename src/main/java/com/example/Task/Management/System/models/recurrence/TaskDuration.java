@@ -1,14 +1,12 @@
-package com.example.Task.Management.System.models.Recurrence;
+package com.example.Task.Management.System.models.recurrence;
 
 import jakarta.persistence.Embeddable;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 @Embeddable
 @Getter
 @Setter
+@Builder(toBuilder = true)
 @NoArgsConstructor
 @AllArgsConstructor
 public class TaskDuration {
