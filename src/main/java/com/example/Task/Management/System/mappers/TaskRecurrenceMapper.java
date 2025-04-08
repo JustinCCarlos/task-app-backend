@@ -1,32 +1,33 @@
-package com.example.Task.Management.System.DTO.TaskRecurrence;
+package com.example.Task.Management.System.mappers;
 
-import com.example.Task.Management.System.models.Recurrence.TaskRecurrence;
+import com.example.Task.Management.System.dtos.TaskRecurrence.TaskRecurrenceDto;
+import com.example.Task.Management.System.services.RecurrencePatternService;
+import com.example.Task.Management.System.models.recurrence.TaskRecurrence;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
 
+@Component
+@RequiredArgsConstructor
 public class TaskRecurrenceMapper {
+    private static RecurrencePatternService pattern;
     public static TaskRecurrenceDto toDto(TaskRecurrence entity) {
         return new TaskRecurrenceDto(
                 entity.getTaskRecurrenceId(),
-                entity.getRecurrenceType(),
-                entity.getInterval(),
                 entity.getRecurrenceStartDate(),
-                entity.getTaskDuration(),
                 entity.getRecurrenceEndDate(),
                 entity.getMaxOccurrences(),
                 entity.getActive(),
-                entity.getRecurrencePattern()
+                entity.getRecurrencePattern().getRecurrencePatternId()
         );
     }
 
     public static TaskRecurrence toEntity(TaskRecurrenceDto dto) {
         return TaskRecurrence.builder()
-                .recurrenceType(dto.recurrenceType())
-                .interval(dto.interval())
                 .recurrenceStartDate(dto.recurrenceStartDate())
-                .taskDuration(dto.taskDuration())
                 .recurrenceEndDate(dto.recurrenceEndDate())
                 .maxOccurrences(dto.maxOccurrences())
                 .active(dto.active() != null ? dto.active() : true) // Default to true if null
-                .recurrencePattern(dto.recurrencePattern())
+                .recurrencePattern(pattern.findById(dto.recurrencePatternId()))
                 .build();
     }
 }
