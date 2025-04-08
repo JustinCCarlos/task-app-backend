@@ -1,4 +1,4 @@
-package com.example.Task.Management.System.models.Recurrence;
+package com.example.Task.Management.System.models.recurrence;
 
 import com.example.Task.Management.System.models.Task;
 import jakarta.persistence.*;
@@ -22,25 +22,12 @@ public class TaskRecurrence {
     @Column(name = "task_recurrence_id")
     private Long taskRecurrenceId;
 
-    @OneToMany(mappedBy = "taskRecurrence", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "taskRecurrence", cascade = CascadeType.MERGE, orphanRemoval = true)
     private List<Task> generatedTasks;
-
-    @NotNull(message = "Recurrence type is required")
-    @Column(name = "recurrence_type", nullable = false)
-    @Enumerated(EnumType.STRING)
-    private RecurrenceType recurrenceType;
-
-    @Min(value = 1, message = "Interval must be at least 1")
-    @Max(value = 99, message = "Interval cannot exceed 99")
-    @Column(name = "interval", nullable = false)
-    private int interval;
 
     @NotNull
     @Column(name = "recurrence_start_date", nullable = false)
     private LocalDateTime recurrenceStartDate;
-
-    @Embedded
-    private TaskDuration taskDuration;
 
     @Column(name = "end_recurrence_date")
     private LocalDateTime recurrenceEndDate;
@@ -53,13 +40,24 @@ public class TaskRecurrence {
     @Column(name = "active", nullable = false)
     private Boolean active = true;
 
-    @Convert(converter = RecurrencePatternConverter.class)
-    @Column(name = "recurrence_pattern", columnDefinition = "JSON")
-    private RecurrencePattern recurrencePattern; //For storing custom recurrence patterns
+    @ManyToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "recurrence_pattern_id")
+    private RecurrencePattern recurrencePattern; //For storing recurrence patterns used for creation of next task
 
     @AssertTrue(message = "Either endDate or maxOccurrences should be set, but not both")
     private boolean isEndDateOrMaxOccurrencesValid() {
         return (recurrenceEndDate != null) ^ (maxOccurrences != null); // XOR ensures only one is set
     }
 
+    // data moved to a separate entity "RecurrencePattern"
+
+    //    @NotNull(message = "Recurrence type is required")
+    //    @Column(name = "recurrence_type", nullable = false)
+    //    @Enumerated(EnumType.STRING)
+    //    private RecurrenceType recurrenceType;
+
+    //    @Min(value = 1, message = "Interval must be at least 1")
+    //    @Max(value = 99, message = "Interval cannot exceed 99")
+    //    @Column(name = "interval", nullable = false)
+    //    private int interval;
 }
