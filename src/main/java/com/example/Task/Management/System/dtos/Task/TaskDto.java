@@ -1,4 +1,4 @@
-package com.example.Task.Management.System.DTO.Task;
+package com.example.Task.Management.System.dtos.Task;
 
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;

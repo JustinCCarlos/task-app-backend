@@ -1,8 +1,7 @@
-package com.example.Task.Management.System.service;
+package com.example.Task.Management.System.services;
 
-import com.example.Task.Management.System.DTO.Task.TaskDto;
-import com.example.Task.Management.System.Service.Implementation.TaskServiceImpl;
-import com.example.Task.Management.System.Service.TaskService;
+import com.example.Task.Management.System.dtos.Task.TaskDto;
+import com.example.Task.Management.System.services.implementations.TaskServiceImpl;
 import com.example.Task.Management.System.models.Category;
 import com.example.Task.Management.System.models.Task;
 import com.example.Task.Management.System.repository.CategoryRepository;

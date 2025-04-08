@@ -1,6 +1,6 @@
 package com.example.Task.Management.System.models;
 
-import com.example.Task.Management.System.models.Recurrence.TaskRecurrence;
+import com.example.Task.Management.System.models.recurrence.TaskRecurrence;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.*;

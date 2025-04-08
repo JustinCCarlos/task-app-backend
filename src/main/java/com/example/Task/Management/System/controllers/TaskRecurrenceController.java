@@ -1,7 +1,7 @@
 package com.example.Task.Management.System.controllers;
 
-import com.example.Task.Management.System.DTO.TaskRecurrence.TaskRecurrenceDto;
-import com.example.Task.Management.System.Service.TaskRecurrenceService;
+import com.example.Task.Management.System.dtos.TaskRecurrence.TaskRecurrenceDto;
+import com.example.Task.Management.System.services.TaskRecurrenceService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;

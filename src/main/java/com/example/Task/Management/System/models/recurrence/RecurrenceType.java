@@ -1,4 +1,4 @@
-package com.example.Task.Management.System.models.Recurrence;
+package com.example.Task.Management.System.models.recurrence;
 
 public enum RecurrenceType {
     DAILY,

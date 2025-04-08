@@ -1,7 +1,6 @@
-package com.example.Task.Management.System.service;
+package com.example.Task.Management.System.services;
 
-import com.example.Task.Management.System.DTO.CategoryDto;
-import com.example.Task.Management.System.Service.CategoryService;
+import com.example.Task.Management.System.dtos.CategoryDto;
 import com.example.Task.Management.System.models.Category;
 import com.example.Task.Management.System.repository.CategoryRepository;
 import org.assertj.core.api.Assertions;

@@ -1,7 +1,7 @@
 package com.example.Task.Management.System.controller;
 
-import com.example.Task.Management.System.DTO.Task.TaskDto;
-import com.example.Task.Management.System.Service.Implementation.TaskServiceImpl;
+import com.example.Task.Management.System.dtos.Task.TaskDto;
+import com.example.Task.Management.System.services.implementations.TaskServiceImpl;
 import com.example.Task.Management.System.controllers.TaskController;
 import com.example.Task.Management.System.models.Category;
 import com.example.Task.Management.System.models.Task;

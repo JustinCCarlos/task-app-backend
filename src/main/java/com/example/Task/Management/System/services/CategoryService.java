@@ -1,6 +1,6 @@
-package com.example.Task.Management.System.Service;
+package com.example.Task.Management.System.services;
 
-import com.example.Task.Management.System.DTO.CategoryDto;
+import com.example.Task.Management.System.dtos.CategoryDto;
 import com.example.Task.Management.System.models.Category;
 import com.example.Task.Management.System.repository.CategoryRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,7 +8,6 @@ import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityNotFoundException;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service

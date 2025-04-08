@@ -1,7 +1,7 @@
 package com.example.Task.Management.System.controller;
 
-import com.example.Task.Management.System.DTO.CategoryDto;
-import com.example.Task.Management.System.Service.CategoryService;
+import com.example.Task.Management.System.dtos.CategoryDto;
+import com.example.Task.Management.System.services.CategoryService;
 import com.example.Task.Management.System.controllers.CategoryController;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;

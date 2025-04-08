@@ -1,11 +1,11 @@
-package com.example.Task.Management.System.Service.Implementation;
+package com.example.Task.Management.System.services.implementations;
 
-import com.example.Task.Management.System.DTO.Task.TaskDto;
-import com.example.Task.Management.System.Service.TaskService;
+import com.example.Task.Management.System.dtos.Task.TaskDto;
+import com.example.Task.Management.System.services.TaskService;
 import com.example.Task.Management.System.models.Category;
 import com.example.Task.Management.System.repository.CategoryRepository;
 import com.example.Task.Management.System.repository.TaskRepository;
-import com.example.Task.Management.System.DTO.Task.TaskMapper;
+import com.example.Task.Management.System.mappers.TaskMapper;
 import com.example.Task.Management.System.models.Task;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;

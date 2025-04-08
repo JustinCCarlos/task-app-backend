@@ -1,7 +1,7 @@
-package com.example.Task.Management.System.DTO.Task;
+package com.example.Task.Management.System.mappers;
 
-import com.example.Task.Management.System.DTO.CategoryDto;
-import com.example.Task.Management.System.Service.CategoryService;
+import com.example.Task.Management.System.dtos.Task.TaskDto;
+import com.example.Task.Management.System.services.CategoryService;
 import com.example.Task.Management.System.models.Task;
 
 public class TaskMapper {

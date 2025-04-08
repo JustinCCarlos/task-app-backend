@@ -1,7 +1,7 @@
-package com.example.Task.Management.System.Service;
+package com.example.Task.Management.System.services;
 
 
-import com.example.Task.Management.System.DTO.Task.TaskDto;
+import com.example.Task.Management.System.dtos.Task.TaskDto;
 
 import java.time.LocalDateTime;
 import java.util.List;
