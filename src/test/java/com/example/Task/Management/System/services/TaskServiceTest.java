@@ -75,6 +75,7 @@ public class TaskServiceTest {
                 .endDate(null)
                 .finishedDate(null)
                 .overdue(false)
+                .taskRecurrence(null)
                 .build();
 
         defaultTaskDto = TaskDto.builder()
@@ -87,6 +88,7 @@ public class TaskServiceTest {
                 .endDate(defaultTask.getEndDate())
                 .finishedDate(defaultTask.getFinishedDate())
                 .overdue(defaultTask.isOverdue())
+                .taskRecurrenceId(defaultTask.getTaskRecurrence() != null ? defaultTask.getTaskRecurrence().getTaskRecurrenceId() : null)
                 .build();
     }
 
