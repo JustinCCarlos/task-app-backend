@@ -3,9 +3,15 @@ package com.example.Task.Management.System.mappers;
 import com.example.Task.Management.System.dtos.Task.TaskDto;
 import com.example.Task.Management.System.services.CategoryService;
 import com.example.Task.Management.System.models.Task;
+import com.example.Task.Management.System.services.TaskRecurrenceService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
 
+@Component
+@RequiredArgsConstructor
 public class TaskMapper {
     private static CategoryService categoryService;
+    private static TaskRecurrenceService recurrenceService;
 
     public static TaskDto toDto(Task task){
         return TaskDto.builder()
@@ -18,6 +24,7 @@ public class TaskMapper {
                 .endDate(task.getEndDate())
                 .finishedDate(task.getFinishedDate())
                 .overdue(task.isOverdue())
+                .taskRecurrenceId((task.getTaskRecurrence() != null) ? task.getTaskRecurrence().getTaskRecurrenceId() : null)
                 .build();
     }
 
@@ -32,6 +39,7 @@ public class TaskMapper {
                 .endDate(taskDto.getEndDate())
                 .finishedDate(taskDto.getFinishedDate())
                 .overdue(taskDto.isOverdue())
+                .taskRecurrence((taskDto.getTaskRecurrenceId() != null) ? recurrenceService.findById(taskDto.getTaskRecurrenceId()) : null)
                 .build();
     }
 }
