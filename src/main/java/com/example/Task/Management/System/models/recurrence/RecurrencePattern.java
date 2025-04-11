@@ -22,6 +22,7 @@ public class RecurrencePattern {
     @Column(name = "recurrence_pattern_id")
     private Long recurrencePatternId;
 
+    @NotNull(message = "Interval is required")
     @Min(value = 1, message = "Interval must be at least 1")
     @Max(value = 99, message = "Interval cannot exceed 99")
     @Builder.Default

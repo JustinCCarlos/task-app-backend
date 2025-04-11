@@ -119,21 +119,15 @@ public class TaskRecurrenceTest {
 
             mockTaskMapper.when(() -> TaskMapper.toDto(any(Task.class))).thenReturn(expectedTaskDto);
 
-            when (calculator.calculateNextStartDate(any(), any(), any()))
+            when (calculator.calculateNextStartDate(any(), any()))
                     .thenReturn(LocalDateTime.of(2025, 4, 9, 10, 0));
-            when (calculator.calculateNextEndDate(any(), any(), any(), any()))
+            when (calculator.calculateNextEndDate(any(), any()))
                     .thenReturn(LocalDateTime.of(2025, 4, 9, 11, 0));
 
             when (taskService.addTask(any()))
                     .thenReturn(expectedTaskDto);
 
             taskRecurrenceImpl.generateNextTask(recurrenceDto, patternDto);
-
-//            verify(taskService, times(1)).addTask(argThat(task ->
-//                    task.getStartDate().equals(expectedTaskDto.getStartDate()) &&
-//                    task.getEndDate().equals(expectedTaskDto.getEndDate()) &&
-//                    !task.isCompleted()
-//            ));
 
             verify(taskService).addTask(taskDtoCaptor.capture());
 
