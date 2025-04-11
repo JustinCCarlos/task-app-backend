@@ -10,6 +10,8 @@ import java.time.temporal.TemporalAdjusters;
 import java.util.List;
 import java.util.Optional;
 
+    //TODO :: Create function to calculate duration for checking and setting
+
 @Component
 public class TaskRecurrenceCalculator {
     public LocalDateTime calculateNextStartDate(
@@ -25,9 +27,8 @@ public class TaskRecurrenceCalculator {
                     .plusDays(Optional.of(pattern)
                             .map(RecurrencePattern::getDaysOfWeek)
                             .filter(daysOfWeek -> !daysOfWeek.isEmpty())
-                            .map(daysOfWeek -> calculateNextDayOfWeek(recurrenceStartDate.getDayOfWeek().getValue(), daysOfWeek))
-                            .orElse(0L));
                             .map(daysOfWeek -> calculateNextDayOfWeek(taskStartDate.getDayOfWeek().getValue(), interval, daysOfWeek))
+                            .orElse(7L  * interval));
             case MONTHLY -> {
                 String monthDayRule  = pattern.getMonthDayRule();
                 if (monthDayRule != null && !monthDayRule.isEmpty()){
@@ -79,7 +80,7 @@ public class TaskRecurrenceCalculator {
         return nextMonth.with(TemporalAdjusters.dayOfWeekInMonth(weekNumber, targetDay));
     }
 
-    private long calculateNextDayOfWeek(int currentDayOfWeek, List<DayOfWeek> daysOfWeek){
+    private long calculateNextDayOfWeek(int currentDayOfWeek, int interval, List<DayOfWeek> daysOfWeek){
         for (java.time.DayOfWeek ofWeek : daysOfWeek) {
             int dayOfWeek = ofWeek.getValue();
             if (dayOfWeek > currentDayOfWeek) {
@@ -88,19 +89,19 @@ public class TaskRecurrenceCalculator {
         }
 
         int nextDayOfWeek  = daysOfWeek.getFirst().getValue();
-        return (7 - currentDayOfWeek) + nextDayOfWeek;
+        return (7L * (interval - 1)) + (7 - currentDayOfWeek) + nextDayOfWeek;
     }
 
     public LocalDateTime calculateNextEndDate(
             LocalDateTime nextStartDate,
             RecurrencePattern pattern)
     {
-        LocalDateTime taskEndDate = taskStartDate;
         LocalDateTime taskEndDate = nextStartDate;
+        LocalDateTime defaultEndDate = calculateNextStartDate(nextStartDate, pattern).minusSeconds(1);
         TaskDuration taskDuration = pattern.getTaskDuration();
 
         if (taskDuration == null || taskDuration.isEmpty()){ // Return default end date
-            return calculateNextStartDate(nextStartDate, taskRecurrence, pattern).minusNanos(1);
+            return defaultEndDate;
         }
 
         if (taskDuration.getMinutes() != null) taskEndDate = taskEndDate.plusMinutes(taskDuration.getMinutes());
@@ -110,6 +111,10 @@ public class TaskRecurrenceCalculator {
         if (taskDuration.getMonths() != null) taskEndDate = taskEndDate.plusMonths(taskDuration.getMonths());
         if (taskDuration.getYears() != null) taskEndDate = taskEndDate.plusYears(taskDuration.getYears());
 
-        return taskEndDate;
+        if (taskEndDate.isAfter(defaultEndDate))
+            return defaultEndDate;
+        else
+            return taskEndDate;
+
     }
 }
