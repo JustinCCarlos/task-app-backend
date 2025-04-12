@@ -1,9 +1,11 @@
-package com.example.Task.Management.System.Service;
+package com.example.Task.Management.System.services.implementations;
 
-import com.example.Task.Management.System.DTO.TaskDto;
+import com.example.Task.Management.System.dtos.Task.TaskDto;
+import com.example.Task.Management.System.services.TaskService;
 import com.example.Task.Management.System.models.Category;
 import com.example.Task.Management.System.repository.CategoryRepository;
 import com.example.Task.Management.System.repository.TaskRepository;
+import com.example.Task.Management.System.mappers.TaskMapper;
 import com.example.Task.Management.System.models.Task;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
@@ -16,13 +18,13 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-public class TaskService {
+public class TaskServiceImpl implements TaskService {
 
     private final TaskRepository taskRepository;
     private final CategoryRepository categoryRepository;
 
     @Autowired
-    public TaskService(TaskRepository taskRepository, CategoryRepository categoryRepository){
+    public TaskServiceImpl(TaskRepository taskRepository, CategoryRepository categoryRepository){
         this.taskRepository = taskRepository;
         this.categoryRepository = categoryRepository;
     }
@@ -30,7 +32,7 @@ public class TaskService {
     public List<TaskDto> getAllTasks(){
         List<Task> tasks = taskRepository.findAll();
         return tasks.stream()
-                .map(this::convertToTaskDto)
+                .map(TaskMapper::toDto)
                 .collect(Collectors.toList());
     }
 
@@ -38,12 +40,12 @@ public class TaskService {
         Task task = taskRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Task not found with id: " + id));
 
-        return convertToTaskDto(task);
+        return TaskMapper.toDto(task);
     }
 
     public List<TaskDto> getTaskContaining(String toSearch) {
         List<Task> tasks = taskRepository.findByTitleContaining(toSearch);
-        return tasks.stream().map(this::convertToTaskDto).collect(Collectors.toList());
+        return tasks.stream().map(TaskMapper::toDto).collect(Collectors.toList());
     }
 
     public TaskDto addTask(TaskDto taskDto) {
@@ -72,7 +74,7 @@ public class TaskService {
 
         Task savedTask = taskRepository.save(newTask);
 
-        return convertToTaskDto(savedTask);
+        return TaskMapper.toDto(savedTask);
     }
 
     public TaskDto updateTask(Long id, TaskDto taskDto){
@@ -109,7 +111,7 @@ public class TaskService {
 
         Task savedTask = taskRepository.save(task);
 
-        return convertToTaskDto(savedTask);
+        return TaskMapper.toDto(savedTask);
     }
 
     public List<TaskDto> getFilteredTasks(Boolean isComplete, String title, String sortBy, String sortDirection, LocalDateTime startDate, LocalDateTime endDate){
@@ -138,7 +140,7 @@ public class TaskService {
         }
 
         List<Task> tasks = taskRepository.findAll(spec, sort);
-        return tasks.stream().map(this::convertToTaskDto).toList();
+        return tasks.stream().map(TaskMapper::toDto).toList();
     }
 
     public void deleteTask(Long id){
@@ -148,19 +150,19 @@ public class TaskService {
         taskRepository.deleteById(id);
     }
 
-    private TaskDto convertToTaskDto(Task task){
-        return TaskDto.builder()
-                .taskId(task.getTaskId())
-                .title(task.getTitle())
-                .completed(task.isCompleted())
-                .categoryId((task.getCategory() != null) ? task.getCategory().getCategoryId() : null)
-                .priority(task.getPriority())
-                .startDate(task.getStartDate())
-                .endDate(task.getEndDate())
-                .finishedDate(task.getFinishedDate())
-                .overdue(task.isOverdue())
-                .build();
-    }
+//    private TaskDto convertToTaskDto(Task task){
+//        return TaskDto.builder()
+//                .taskId(task.getTaskId())
+//                .title(task.getTitle())
+//                .completed(task.isCompleted())
+//                .categoryId((task.getCategory() != null) ? task.getCategory().getCategoryId() : null)
+//                .priority(task.getPriority())
+//                .startDate(task.getStartDate())
+//                .endDate(task.getEndDate())
+//                .finishedDate(task.getFinishedDate())
+//                .overdue(task.isOverdue())
+//                .build();
+//    }
 
 //    private Task convertToEntity(TaskDto taskDto){
 //        return new Task(taskDto.getId(), taskDto.getTitle(), taskDto.isCompleted(), , task);

@@ -1,4 +1,4 @@
-package com.example.Task.Management.System.DTO;
+package com.example.Task.Management.System.dtos;
 
 import jakarta.persistence.Column;
 import jakarta.validation.constraints.Size;

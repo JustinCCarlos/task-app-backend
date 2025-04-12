@@ -1,4 +1,4 @@
-package com.example.Task.Management.System.DTO;
+package com.example.Task.Management.System.dtos.Task;
 
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
@@ -32,6 +32,7 @@ public class TaskDto {
     private LocalDateTime endDate;
     private LocalDateTime finishedDate;
     private boolean overdue;
+    private Long taskRecurrenceId;
 
     //removes null value to allow default to work
     public static class TaskDtoBuilder{

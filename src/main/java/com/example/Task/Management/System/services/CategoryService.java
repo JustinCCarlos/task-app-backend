@@ -1,6 +1,6 @@
-package com.example.Task.Management.System.Service;
+package com.example.Task.Management.System.services;
 
-import com.example.Task.Management.System.DTO.CategoryDto;
+import com.example.Task.Management.System.dtos.CategoryDto;
 import com.example.Task.Management.System.models.Category;
 import com.example.Task.Management.System.repository.CategoryRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +29,11 @@ public class CategoryService {
     public List<CategoryDto> findByName(String toSearch){
         List<Category> categories = categoryRepository.findByNameContaining(toSearch);
         return categories.stream().map(this::convertToCategoryDto).collect(Collectors.toList());
+    }
+
+    public Category findById(long id){
+        return categoryRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Category not found"));
     }
 
     public CategoryDto createCategory(CategoryDto categoryDto){

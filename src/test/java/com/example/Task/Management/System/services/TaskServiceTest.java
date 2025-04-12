@@ -1,13 +1,11 @@
-package com.example.Task.Management.System.service;
+package com.example.Task.Management.System.services;
 
-import com.example.Task.Management.System.DTO.TaskDto;
-import com.example.Task.Management.System.Service.TaskService;
+import com.example.Task.Management.System.dtos.Task.TaskDto;
+import com.example.Task.Management.System.services.implementations.TaskServiceImpl;
 import com.example.Task.Management.System.models.Category;
 import com.example.Task.Management.System.models.Task;
 import com.example.Task.Management.System.repository.CategoryRepository;
 import com.example.Task.Management.System.repository.TaskRepository;
-import net.bytebuddy.asm.Advice;
-import org.assertj.core.api.Assert;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -16,7 +14,6 @@ import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import javax.persistence.EntityNotFoundException;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.Month;
 import java.time.temporal.ChronoUnit;
@@ -41,7 +38,7 @@ public class TaskServiceTest {
     private CategoryRepository categoryRepository;
 
     @InjectMocks
-    private TaskService taskService;
+    private TaskServiceImpl taskService;
 
     @Captor
     private ArgumentCaptor<Task> taskCaptor;
@@ -55,6 +52,7 @@ public class TaskServiceTest {
 
     @BeforeEach
     public void init() {
+//        taskService = new TaskServiceImpl(taskRepository, categoryRepository);
         taskCaptor = ArgumentCaptor.forClass(Task.class);
         taskDtoCaptor = ArgumentCaptor.forClass(TaskDto.class);
 
@@ -77,6 +75,7 @@ public class TaskServiceTest {
                 .endDate(null)
                 .finishedDate(null)
                 .overdue(false)
+                .taskRecurrence(null)
                 .build();
 
         defaultTaskDto = TaskDto.builder()
@@ -89,6 +88,7 @@ public class TaskServiceTest {
                 .endDate(defaultTask.getEndDate())
                 .finishedDate(defaultTask.getFinishedDate())
                 .overdue(defaultTask.isOverdue())
+                .taskRecurrenceId(defaultTask.getTaskRecurrence() != null ? defaultTask.getTaskRecurrence().getTaskRecurrenceId() : null)
                 .build();
     }
 
