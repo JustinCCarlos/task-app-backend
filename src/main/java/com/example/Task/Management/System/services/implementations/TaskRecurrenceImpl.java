@@ -48,6 +48,7 @@ public class TaskRecurrenceImpl implements TaskRecurrenceService {
 
     public TaskRecurrenceDto createRecurrence(TaskRecurrenceDto recurrenceDto) {
         TaskRecurrence taskRecurrence = TaskRecurrenceMapper.toEntity(recurrenceDto);
+
         TaskRecurrence savedRecurrence = taskRecurrenceRepository.save(taskRecurrence);
         return TaskRecurrenceMapper.toDto(savedRecurrence);
     }
@@ -72,8 +73,7 @@ public class TaskRecurrenceImpl implements TaskRecurrenceService {
                     .build();
             TaskDto nextTaskDto = TaskMapper.toDto(nextTask);
 
-            taskService.addTask(nextTaskDto);
-            //System.out.println(nextTaskDto);
+            taskService.createTask(nextTaskDto);
             logger.info("Next task generated with dates: start={}, end{}", nextStartDate, nextEndDate);
         } catch (Exception e) {
             logger.error("Error generating next task: ", e);

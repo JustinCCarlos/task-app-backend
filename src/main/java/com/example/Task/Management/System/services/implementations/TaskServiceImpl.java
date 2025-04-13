@@ -1,12 +1,22 @@
 package com.example.Task.Management.System.services.implementations;
 
 import com.example.Task.Management.System.dtos.Task.TaskDto;
+import com.example.Task.Management.System.dtos.TaskRecurrence.RecurrencePatternDto;
+import com.example.Task.Management.System.dtos.TaskRecurrence.TaskDurationDto;
+import com.example.Task.Management.System.dtos.TaskRecurrence.TaskRecurrenceDto;
+import com.example.Task.Management.System.mappers.RecurrencePatternMapper;
+import com.example.Task.Management.System.mappers.TaskDurationMapper;
+import com.example.Task.Management.System.models.recurrence.RecurrencePattern;
+import com.example.Task.Management.System.models.recurrence.TaskDuration;
+import com.example.Task.Management.System.models.recurrence.TaskRecurrence;
+import com.example.Task.Management.System.repository.TaskRecurrenceRepository;
 import com.example.Task.Management.System.services.TaskService;
 import com.example.Task.Management.System.models.Category;
 import com.example.Task.Management.System.repository.CategoryRepository;
 import com.example.Task.Management.System.repository.TaskRepository;
 import com.example.Task.Management.System.mappers.TaskMapper;
 import com.example.Task.Management.System.models.Task;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
@@ -22,11 +32,17 @@ public class TaskServiceImpl implements TaskService {
 
     private final TaskRepository taskRepository;
     private final CategoryRepository categoryRepository;
+    private final TaskRecurrenceRepository recurrenceRepository;
 
     @Autowired
-    public TaskServiceImpl(TaskRepository taskRepository, CategoryRepository categoryRepository){
+    public TaskServiceImpl(
+            TaskRepository taskRepository,
+            CategoryRepository categoryRepository,
+            TaskRecurrenceRepository recurrenceRepository)
+    {
         this.taskRepository = taskRepository;
         this.categoryRepository = categoryRepository;
+        this.recurrenceRepository = recurrenceRepository;
     }
 
     public List<TaskDto> getAllTasks(){
@@ -48,7 +64,7 @@ public class TaskServiceImpl implements TaskService {
         return tasks.stream().map(TaskMapper::toDto).collect(Collectors.toList());
     }
 
-    public TaskDto addTask(TaskDto taskDto) {
+    public TaskDto createTask(TaskDto taskDto) {
         Category category = null;
 
         if ((taskDto.getPriority() < 1 || taskDto.getPriority() > 5)){
@@ -75,6 +91,43 @@ public class TaskServiceImpl implements TaskService {
         Task savedTask = taskRepository.save(newTask);
 
         return TaskMapper.toDto(savedTask);
+    }
+
+    @Transactional
+    public TaskDto createTaskWithRecurrence(
+            TaskDto taskDto,
+            TaskRecurrenceDto recurrenceDto,
+            RecurrencePatternDto patternDto)
+    {
+        TaskDuration newDuration = TaskDurationMapper.toEntity(patternDto.taskDurationDto());
+
+        RecurrencePattern pattern = RecurrencePattern.builder()
+                .interval(patternDto.interval())
+                .recurrenceType(patternDto.recurrenceType())
+                .taskDuration(newDuration)
+                .daysOfWeek(patternDto.daysOfWeek())
+                .monthDayRule(patternDto.monthDayRule())
+                .build();
+
+        TaskRecurrence newRecurrence = TaskRecurrence.builder()
+                .recurrenceStartDate(recurrenceDto.recurrenceStartDate())
+                .recurrenceEndDate(recurrenceDto.recurrenceEndDate())
+                .maxOccurrences(recurrenceDto.maxOccurrences())
+                .active(true)
+                .recurrencePattern(pattern)
+                .build();
+
+        newRecurrence = recurrenceRepository.save(newRecurrence);
+
+        Task newTask = TaskMapper.toEntity(createTask(taskDto));
+        newTask.setTaskRecurrence(newRecurrence);
+        newTask = taskRepository.save(newTask);
+
+        newRecurrence.setGeneratedTasks(List.of(newTask));
+        recurrenceRepository.save(newRecurrence);
+
+        return TaskMapper.toDto(newTask);
+
     }
 
     public TaskDto updateTask(Long id, TaskDto taskDto){
