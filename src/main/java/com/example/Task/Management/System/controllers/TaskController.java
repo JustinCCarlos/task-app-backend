@@ -30,9 +30,9 @@ public class TaskController {
         return ResponseEntity.status(HttpStatus.CREATED).body(savedTask);
     }
 
-    @PostMapping("/recurring")
-    public ResponseEntity<TaskDto>  createTaskWithRecurrence(@RequestBody CreateTaskWithRecurrenceRequest request){
-        TaskDto savedTask= taskService.createTaskWithRecurrence(request.task(), request.recurrence(),request.pattern());
+    @PostMapping("/recurring-tasks")
+    public ResponseEntity<TaskDto>  createTaskWithRecurrence(@Valid @RequestBody CreateTaskWithRecurrenceRequest request){
+        TaskDto savedTask = taskService.createTaskWithRecurrence(request.task(), request.recurrence(),request.pattern());
         return ResponseEntity.status(HttpStatus.CREATED).body(savedTask);
     }
 

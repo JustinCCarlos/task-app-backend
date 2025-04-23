@@ -1,5 +1,6 @@
 package com.example.Task.Management.System.controllers;
 
+import com.example.Task.Management.System.dtos.TaskRecurrence.CreateRecurrenceRequest;
 import com.example.Task.Management.System.dtos.TaskRecurrence.TaskRecurrenceDto;
 import com.example.Task.Management.System.services.TaskRecurrenceService;
 import jakarta.validation.Valid;
@@ -19,8 +20,8 @@ public class TaskRecurrenceController {
     }
 
     @PostMapping
-    public ResponseEntity<TaskRecurrenceDto> createRecurrence(@Valid @RequestBody TaskRecurrenceDto recurrenceDto){
-        TaskRecurrenceDto savedRecurrenceDto = taskRecurrenceService.createRecurrence(recurrenceDto);
+    public ResponseEntity<TaskRecurrenceDto> createRecurrence(@Valid @RequestBody CreateRecurrenceRequest request){
+        TaskRecurrenceDto savedRecurrenceDto = taskRecurrenceService.createRecurrenceForExistingTask(request.recurrenceDto(), request.patternDto());
         return ResponseEntity.status(HttpStatus.CREATED).body(savedRecurrenceDto);
     }
 

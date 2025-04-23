@@ -1,6 +1,5 @@
-package com.example.Task.Management.System.services;
+package com.example.Task.Management.System.domainservice;
 
-import com.example.Task.Management.System.domainservice.TaskRecurrenceCalculator;
 import com.example.Task.Management.System.models.recurrence.RecurrencePattern;
 import com.example.Task.Management.System.models.recurrence.RecurrenceType;
 import com.example.Task.Management.System.models.recurrence.TaskDuration;

@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import lombok.*;
 
 import java.time.DayOfWeek;
@@ -42,6 +43,7 @@ public class RecurrencePattern {
     @Enumerated(EnumType.STRING)
     private List<DayOfWeek> daysOfWeek;
 
+    @Pattern(regexp = "^(day_\\d{1,2}|(first|second|third|fourth|last)_(monday|tuesday|wednesday|thursday|friday|saturday|sunday))$", message = "Invalid monthDayRule format")
     @Column(name = "month_day_rule")
     private String monthDayRule; //Ex. "first_monday" "day_15"
 

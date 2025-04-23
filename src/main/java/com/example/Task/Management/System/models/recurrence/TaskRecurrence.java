@@ -40,12 +40,12 @@ public class TaskRecurrence {
     @Column(name = "active", nullable = false)
     private Boolean active = true;
 
-    @ManyToOne(cascade = CascadeType.ALL)
+    @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "recurrence_pattern_id")
     private RecurrencePattern recurrencePattern; //For storing recurrence patterns used for creation of next task
 
-    @AssertTrue(message = "Either endDate or maxOccurrences should be set, but not both")
+    @AssertTrue(message = "Either endDate or maxOccurrences can be set, but not both")
     private boolean isEndDateOrMaxOccurrencesValid() {
-        return (recurrenceEndDate != null) ^ (maxOccurrences != null); // XOR ensures only one is set
+        return (recurrenceEndDate == null && maxOccurrences == null) || ((recurrenceEndDate != null) ^ (maxOccurrences != null));
     }
 }

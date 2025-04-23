@@ -1,15 +1,13 @@
 package com.example.Task.Management.System.services.implementations;
 
+import com.example.Task.Management.System.domainservice.TaskFactory;
+import com.example.Task.Management.System.domainservice.TaskRecurrenceFactory;
 import com.example.Task.Management.System.dtos.Task.TaskDto;
 import com.example.Task.Management.System.dtos.TaskRecurrence.RecurrencePatternDto;
-import com.example.Task.Management.System.dtos.TaskRecurrence.TaskDurationDto;
 import com.example.Task.Management.System.dtos.TaskRecurrence.TaskRecurrenceDto;
-import com.example.Task.Management.System.mappers.RecurrencePatternMapper;
-import com.example.Task.Management.System.mappers.TaskDurationMapper;
-import com.example.Task.Management.System.models.recurrence.RecurrencePattern;
-import com.example.Task.Management.System.models.recurrence.TaskDuration;
 import com.example.Task.Management.System.models.recurrence.TaskRecurrence;
 import com.example.Task.Management.System.repository.TaskRecurrenceRepository;
+import com.example.Task.Management.System.services.CategoryService;
 import com.example.Task.Management.System.services.TaskService;
 import com.example.Task.Management.System.models.Category;
 import com.example.Task.Management.System.repository.CategoryRepository;
@@ -17,12 +15,14 @@ import com.example.Task.Management.System.repository.TaskRepository;
 import com.example.Task.Management.System.mappers.TaskMapper;
 import com.example.Task.Management.System.models.Task;
 import jakarta.transaction.Transactional;
+import jakarta.validation.ValidationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityNotFoundException;
+
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -31,24 +31,33 @@ import java.util.stream.Collectors;
 public class TaskServiceImpl implements TaskService {
 
     private final TaskRepository taskRepository;
-    private final CategoryRepository categoryRepository;
+    private final CategoryService categoryService;
     private final TaskRecurrenceRepository recurrenceRepository;
+    private final TaskRecurrenceFactory recurrenceFactory;
+    private final TaskMapper taskMapper;
+    private final TaskFactory taskFactory;
 
     @Autowired
     public TaskServiceImpl(
             TaskRepository taskRepository,
-            CategoryRepository categoryRepository,
-            TaskRecurrenceRepository recurrenceRepository)
+            CategoryService categoryRepository,
+            TaskRecurrenceRepository recurrenceRepository,
+            TaskRecurrenceFactory recurrenceFactory,
+            TaskMapper taskMapper,
+            TaskFactory taskFactory)
     {
         this.taskRepository = taskRepository;
-        this.categoryRepository = categoryRepository;
+        this.categoryService = categoryRepository;
         this.recurrenceRepository = recurrenceRepository;
+        this.recurrenceFactory = recurrenceFactory;
+        this.taskMapper = taskMapper;
+        this.taskFactory = taskFactory;
     }
 
     public List<TaskDto> getAllTasks(){
         List<Task> tasks = taskRepository.findAll();
         return tasks.stream()
-                .map(TaskMapper::toDto)
+                .map(taskMapper::toDto)
                 .collect(Collectors.toList());
     }
 
@@ -56,41 +65,22 @@ public class TaskServiceImpl implements TaskService {
         Task task = taskRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Task not found with id: " + id));
 
-        return TaskMapper.toDto(task);
+        return taskMapper.toDto(task);
     }
 
     public List<TaskDto> getTaskContaining(String toSearch) {
         List<Task> tasks = taskRepository.findByTitleContaining(toSearch);
-        return tasks.stream().map(TaskMapper::toDto).collect(Collectors.toList());
+        return tasks.stream().map(taskMapper::toDto).collect(Collectors.toList());
     }
 
     public TaskDto createTask(TaskDto taskDto) {
-        Category category = null;
+        Category category = (taskDto.getCategoryId() != null)
+                ? categoryService.findById(taskDto.getCategoryId())
+                : null;
 
-        if ((taskDto.getPriority() < 1 || taskDto.getPriority() > 5)){
-            throw new IllegalArgumentException("Priority must be between 1 and 5");
-        }
-
-        if (taskDto.getStartDate() == null){
-            taskDto.setStartDate(LocalDateTime.now());
-        }
-
-        if (taskDto.getCategoryId() != null){
-            category = categoryRepository.findById(taskDto.getCategoryId())
-                    .orElseThrow(() -> new IllegalArgumentException("Category not found"));
-        }
-
-        Task newTask = Task.builder()
-                .title(taskDto.getTitle())
-                .category(category)
-                .priority(taskDto.getPriority())
-                .startDate(taskDto.getStartDate())
-                .endDate(taskDto.getEndDate())
-                .build();
-
+        Task newTask = taskFactory.createTask(taskDto, category);
         Task savedTask = taskRepository.save(newTask);
-
-        return TaskMapper.toDto(savedTask);
+        return taskMapper.toDto(savedTask);
     }
 
     @Transactional
@@ -99,72 +89,42 @@ public class TaskServiceImpl implements TaskService {
             TaskRecurrenceDto recurrenceDto,
             RecurrencePatternDto patternDto)
     {
-        TaskDuration newDuration = TaskDurationMapper.toEntity(patternDto.taskDurationDto());
+        Category category = (taskDto.getCategoryId() != null)
+                ? categoryService.findById(taskDto.getCategoryId())
+                : null;
 
-        RecurrencePattern pattern = RecurrencePattern.builder()
-                .interval(patternDto.interval())
-                .recurrenceType(patternDto.recurrenceType())
-                .taskDuration(newDuration)
-                .daysOfWeek(patternDto.daysOfWeek())
-                .monthDayRule(patternDto.monthDayRule())
-                .build();
-
-        TaskRecurrence newRecurrence = TaskRecurrence.builder()
-                .recurrenceStartDate(recurrenceDto.recurrenceStartDate())
-                .recurrenceEndDate(recurrenceDto.recurrenceEndDate())
-                .maxOccurrences(recurrenceDto.maxOccurrences())
-                .active(true)
-                .recurrencePattern(pattern)
-                .build();
-
+        TaskRecurrence newRecurrence = recurrenceFactory.createRecurrence(recurrenceDto, patternDto);
         newRecurrence = recurrenceRepository.save(newRecurrence);
 
-        Task newTask = TaskMapper.toEntity(createTask(taskDto));
-        newTask.setTaskRecurrence(newRecurrence);
+        Task newTask = taskFactory.createTask(taskDto, category, newRecurrence);
         newTask = taskRepository.save(newTask);
 
         newRecurrence.setGeneratedTasks(List.of(newTask));
         recurrenceRepository.save(newRecurrence);
 
-        return TaskMapper.toDto(newTask);
+        return taskMapper.toDto(newTask);
 
     }
 
     public TaskDto updateTask(Long id, TaskDto taskDto){
-        Task task = taskRepository.findById(id)
+        Task existingTask = taskRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Task not found with id: " + id));
 
-        task.setCompleted(taskDto.isCompleted());
+        Category category = (taskDto.getCategoryId() != null)
+                ? categoryService.findById(taskDto.getCategoryId())
+                : null;
 
-        if(taskDto.getTitle() != null && !taskDto.getTitle().equals(task.getTitle())){
-            task.setTitle(taskDto.getTitle());
+        taskMapper.updateEntity(existingTask, taskDto, category);
+
+        try {
+            taskFactory.validateUpdate(existingTask);
+        } catch (ValidationException e) {
+            throw new RuntimeException(e);
         }
 
-        if(taskDto.getCategoryId() != null){
-            Category category = categoryRepository.findById(taskDto.getCategoryId())
-                    .orElseThrow(() -> new IllegalArgumentException("Category not found"));
-            task.setCategory(category);
-        } else {
-            task.setCategory(null);
-        }
+        Task savedTask = taskRepository.save(existingTask);
 
-        if (taskDto.getPriority() != null && !taskDto.getPriority().equals(task.getPriority())){
-            if (taskDto.getPriority() < 1 || taskDto.getPriority() > 5){
-                throw new IllegalArgumentException("Priority must be between 1 and 5");
-            }
-            task.setPriority(taskDto.getPriority());
-        }
-
-        if (taskDto.getStartDate() != null && !taskDto.getStartDate().equals(task.getStartDate())){
-            task.setStartDate(taskDto.getStartDate());
-        }
-
-        task.setFinishedDate(taskDto.getFinishedDate());
-        task.setEndDate(taskDto.getEndDate());
-
-        Task savedTask = taskRepository.save(task);
-
-        return TaskMapper.toDto(savedTask);
+        return taskMapper.toDto(savedTask);
     }
 
     public List<TaskDto> getFilteredTasks(Boolean isComplete, String title, String sortBy, String sortDirection, LocalDateTime startDate, LocalDateTime endDate){
@@ -193,7 +153,7 @@ public class TaskServiceImpl implements TaskService {
         }
 
         List<Task> tasks = taskRepository.findAll(spec, sort);
-        return tasks.stream().map(TaskMapper::toDto).toList();
+        return tasks.stream().map(taskMapper::toDto).toList();
     }
 
     public void deleteTask(Long id){
@@ -203,21 +163,4 @@ public class TaskServiceImpl implements TaskService {
         taskRepository.deleteById(id);
     }
 
-//    private TaskDto convertToTaskDto(Task task){
-//        return TaskDto.builder()
-//                .taskId(task.getTaskId())
-//                .title(task.getTitle())
-//                .completed(task.isCompleted())
-//                .categoryId((task.getCategory() != null) ? task.getCategory().getCategoryId() : null)
-//                .priority(task.getPriority())
-//                .startDate(task.getStartDate())
-//                .endDate(task.getEndDate())
-//                .finishedDate(task.getFinishedDate())
-//                .overdue(task.isOverdue())
-//                .build();
-//    }
-
-//    private Task convertToEntity(TaskDto taskDto){
-//        return new Task(taskDto.getId(), taskDto.getTitle(), taskDto.isCompleted(), , task);
-//    }
 }

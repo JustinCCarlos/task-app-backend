@@ -1,6 +1,14 @@
 package com.example.Task.Management.System.services;
 
+import com.example.Task.Management.System.domainservice.TaskFactory;
+import com.example.Task.Management.System.domainservice.TaskRecurrenceFactory;
 import com.example.Task.Management.System.dtos.Task.TaskDto;
+import com.example.Task.Management.System.dtos.TaskRecurrence.RecurrencePatternDto;
+import com.example.Task.Management.System.dtos.TaskRecurrence.TaskRecurrenceDto;
+import com.example.Task.Management.System.mappers.TaskMapper;
+import com.example.Task.Management.System.models.recurrence.RecurrenceType;
+import com.example.Task.Management.System.models.recurrence.TaskRecurrence;
+import com.example.Task.Management.System.repository.TaskRecurrenceRepository;
 import com.example.Task.Management.System.services.implementations.TaskServiceImpl;
 import com.example.Task.Management.System.models.Category;
 import com.example.Task.Management.System.models.Task;
@@ -16,7 +24,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import javax.persistence.EntityNotFoundException;
 import java.time.LocalDateTime;
 import java.time.Month;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -33,9 +40,16 @@ public class TaskServiceTest {
 
     @Mock
     private TaskRepository taskRepository;
-
     @Mock
-    private CategoryRepository categoryRepository;
+    private CategoryService categoryService;
+    @Mock
+    private TaskRecurrenceRepository recurrenceRepository;
+    @Mock
+    private TaskMapper taskMapper;
+    @Mock
+    private TaskRecurrenceFactory recurrenceFactory;
+    @Mock
+    private TaskFactory taskFactory;
 
     @InjectMocks
     private TaskServiceImpl taskService;
@@ -43,18 +57,13 @@ public class TaskServiceTest {
     @Captor
     private ArgumentCaptor<Task> taskCaptor;
 
-    @Captor
-    private ArgumentCaptor<TaskDto> taskDtoCaptor;
-
     private Category defaultCategory;
     private Task defaultTask;
     private TaskDto defaultTaskDto;
 
     @BeforeEach
     public void init() {
-//        taskService = new TaskServiceImpl(taskRepository, categoryRepository);
         taskCaptor = ArgumentCaptor.forClass(Task.class);
-        taskDtoCaptor = ArgumentCaptor.forClass(TaskDto.class);
 
         LocalDateTime defaultStartDate = LocalDateTime.of(2026, Month.FEBRUARY, 27,0,0);
         LocalDateTime defaultEndDate = LocalDateTime.of(2026, Month.MARCH, 30,0,0);
@@ -79,21 +88,20 @@ public class TaskServiceTest {
                 .build();
 
         defaultTaskDto = TaskDto.builder()
-                .taskId(defaultTask.getTaskId())
-                .title(defaultTask.getTitle())
-                .completed(defaultTask.isCompleted())
-                .categoryId(defaultTask.getCategory().getCategoryId())
-                .priority(defaultTask.getPriority())
-                .startDate(defaultTask.getStartDate())
-                .endDate(defaultTask.getEndDate())
-                .finishedDate(defaultTask.getFinishedDate())
-                .overdue(defaultTask.isOverdue())
-                .taskRecurrenceId(defaultTask.getTaskRecurrence() != null ? defaultTask.getTaskRecurrence().getTaskRecurrenceId() : null)
+                .title("Default Task")
+                .completed(false)
+                .categoryId(1L)
+                .priority(3)
+                .startDate(defaultStartDate)
+                .endDate(null)
+                .finishedDate(null)
+                .overdue(false)
+                .taskRecurrenceId(null)
                 .build();
     }
 
     @Test
-    public void TaskService_GetAllTask_ReturnAllTaskDto(){
+    public void retrieve_all_task_from_database(){
         Task task1 = defaultTask.toBuilder()
                 .title("task1").build();
         Task task2 = defaultTask.toBuilder()
@@ -117,22 +125,19 @@ public class TaskServiceTest {
     }
 
     @Test
-    public void TaskService_GetTaskById_ReturnTask() {
-        Task task = defaultTask.toBuilder()
-                .title("test task")
-                .build();
-
-        when(taskRepository.findById(anyLong())).thenReturn(Optional.ofNullable(task));
+    public void valid_taskId_returns_task() {
+        when(taskRepository.findById(anyLong())).thenReturn(Optional.ofNullable(defaultTask));
+        when(taskMapper.toDto(defaultTask)).thenReturn(defaultTaskDto.toBuilder().taskId(1L).build());
 
         TaskDto foundTaskDto = taskService.getTaskById(1L);
 
         verify(taskRepository).findById(anyLong());
         Assertions.assertThat(foundTaskDto).isNotNull();
-        Assertions.assertThat(foundTaskDto.getTitle()).hasToString("test task");
+        Assertions.assertThat(foundTaskDto.getTitle()).hasToString("Default Task");
     }
 
     @Test
-    public void TaskService_GetTaskById_ThrowException() {
+    public void invalid_taskId_throws_exception() {
         when(taskRepository.findById(anyLong())).thenReturn(Optional.empty());
         Assertions.assertThatThrownBy(() -> taskService.getTaskById(1L))
                 .isInstanceOf(EntityNotFoundException.class)
@@ -145,11 +150,17 @@ public class TaskServiceTest {
                 .title("to be found 1")
                 .build();
         Task task2 = defaultTask.toBuilder()
-                .title("to be founded 2")
+                .title("to be found 2")
                 .build();
 
         List<Task> tasks = List.of(task1, task2);
         when(taskRepository.findByTitleContaining("found")).thenReturn(tasks);
+        when(taskMapper.toDto(any(Task.class))).thenAnswer(inv -> {
+             Task task = inv.getArgument(0);
+             return TaskDto.builder()
+                     .title(task.getTitle())
+                     .build();
+        });
 
         List<TaskDto> foundTask = taskService.getTaskContaining("found");
 
@@ -157,34 +168,36 @@ public class TaskServiceTest {
                 .isNotNull()
                 .hasSize(2)
                 .extracting(TaskDto::getTitle)
-                .contains("to be found 1", "to be founded 2");
+                .contains("to be found 1", "to be found 2");
         verify(taskRepository).findByTitleContaining("found");
     }
+// commented because test is moved over to TaskFactory
+//    @Test
+//    public void created_task_with_null_priority_defaults_to_3(){
+//        TaskDto taskDto = defaultTaskDto.toBuilder()
+//                .title("title")
+//                .priority(null)
+//                .categoryId(null)
+//                .build();
+//
+//        Task task = defaultTask.toBuilder()
+//                .title(taskDto.getTitle())
+//                .priority(3)
+//                .category(null)
+//                .build();
+//
+//        when(taskRepository.save(any(Task.class))).thenReturn(task);
+//
+//        TaskDto addedTask = taskService.createTask(taskDto);
+//
+//        verify(taskRepository).save(any(Task.class));
+//        Assertions.assertThat(addedTask)
+//                .extracting(TaskDto::getTitle, TaskDto::getPriority)
+//                .contains("title",3);
+//    }
 
     @Test
-    public void TaskService_AddTask_NullPriority_ReturnTaskDto(){
-        TaskDto taskDto = defaultTaskDto.toBuilder()
-                .title("title")
-                .categoryId(null)
-                .build();
-
-        Task task = defaultTask.toBuilder()
-                .title(taskDto.getTitle())
-                .category(null)
-                .build();
-
-        when(taskRepository.save(any(Task.class))).thenReturn(task);
-
-        TaskDto addedTask = taskService.addTask(taskDto);
-
-        verify(taskRepository).save(any(Task.class));
-        Assertions.assertThat(addedTask)
-                .extracting(TaskDto::getTitle, TaskDto::getPriority)
-                .contains("title",3);
-    }
-
-    @Test
-    public void TaskService_AddTask_TitleCategory_ReturnTaskDto(){
+    public void task_with_category_is_created(){
         TaskDto taskDto = defaultTaskDto.toBuilder()
                 .title("test task")
                 .priority(null)
@@ -197,13 +210,22 @@ public class TaskServiceTest {
                 .category(defaultCategory)
                 .build();
 
-        when(categoryRepository.findById(anyLong())).thenReturn(Optional.ofNullable(defaultCategory));
+        TaskDto returnedDto = taskDto.toBuilder()
+                .categoryId(1L)
+                .build();
+
+        when(categoryService.findById(anyLong())).thenReturn(defaultCategory);
+        when(taskFactory.createTask(any(TaskDto.class),any(Category.class))).thenReturn(task);
         when(taskRepository.save(any(Task.class))).thenReturn(task);
+        when(taskMapper.toDto(any(Task.class))).thenReturn(returnedDto);
 
-        TaskDto newTask = taskService.addTask(taskDto);
+        TaskDto newTask = taskService.createTask(taskDto);
 
+        verify(categoryService).findById(anyLong());
+        verify(taskFactory).createTask(taskDto, defaultCategory);
         verify(taskRepository).save(any(Task.class));
-        verify(categoryRepository).findById(anyLong());
+        verify(taskMapper).toDto(task);
+
         Assertions.assertThat(newTask)
                 .isNotNull()
                 .extracting(TaskDto::getTitle, TaskDto::getCategoryId)
@@ -211,7 +233,7 @@ public class TaskServiceTest {
     }
 
     @Test
-    public void TaskService_AddTask_TitleDeadline_ReturnTaskDto(){
+    public void Task_with_correct_endDate_is_created_successfully(){
         TaskDto taskDto = defaultTaskDto.toBuilder()
                 .title("test task")
                 .completed(false)
@@ -219,46 +241,75 @@ public class TaskServiceTest {
                 .endDate(LocalDateTime.of(2025, Month.FEBRUARY, 28, 6, 0, 0))
                 .build();
 
-        Task task = defaultTask.toBuilder()
+        Task newTask = defaultTask.toBuilder()
                 .title(taskDto.getTitle())
                 .category(null)
                 .endDate(taskDto.getEndDate())
                 .build();
 
-        when(taskRepository.save(any(Task.class))).thenReturn(task);
+        TaskDto newTaskDto = taskDto.toBuilder()
+                .taskId(1L)
+                .build();
 
-        TaskDto newTask = taskService.addTask(taskDto);
+        when(taskFactory.createTask(any(TaskDto.class), isNull())).thenReturn(newTask);
+        when(taskRepository.save(any(Task.class))).thenReturn(newTask);
+        when(taskMapper.toDto(any(Task.class))).thenReturn(newTaskDto);
 
-        verify(taskRepository).save(any(Task.class));
-        Assertions.assertThat(newTask.getEndDate())
+        TaskDto savedTask = taskService.createTask(taskDto);
+
+        verify(taskRepository).save(newTask);
+        Assertions.assertThat(savedTask.getTaskId()).isEqualTo(1L);
+        Assertions.assertThat(savedTask.getEndDate())
                 .hasMonth(Month.FEBRUARY)
                 .hasDayOfMonth(28)
                 .hasHour(6)
                 .hasMinute(0)
                 .hasSecond(0);
-        Assertions.assertThat(newTask.getTitle()).isEqualTo("test task");
+        Assertions.assertThat(savedTask.getTitle()).isEqualTo("test task");
     }
 
     @Test
-    public void TaskService_AddTask_NullStartDate_ReturnTaskDto(){
-        TaskDto taskDto = defaultTaskDto.toBuilder()
-                .startDate(null)
-                .categoryId(null)
+    void create_task_repeating_every_day(){
+        TaskRecurrenceDto recurrenceDto = TaskRecurrenceDto.builder()
+                .recurrenceStartDate(defaultTask.getStartDate())
+                .recurrenceEndDate(null)
+                .maxOccurrences(5)
+                .active(true)
                 .build();
 
-        when(taskRepository.save(any(Task.class))).thenAnswer(invocation -> {
-            return invocation.<Task>getArgument(0);
-        });
+        RecurrencePatternDto patternDto = RecurrencePatternDto.builder()
+                .interval(1)
+                .recurrenceType(RecurrenceType.DAILY)
+                .taskDurationDto(null)
+                .build();
 
-        TaskDto newTask = taskService.addTask(taskDto);
+        TaskRecurrence newRecurrence = TaskRecurrence.builder()
+                .taskRecurrenceId(1L)
+                .recurrenceStartDate(defaultTask.getStartDate())
+                .maxOccurrences(5)
+                .active(true)
+                .build();
 
-        verify(taskRepository).save(taskCaptor.capture());
-        Task savedTask = taskCaptor.getValue();
+        Task taskWithRecurrence = defaultTask.toBuilder()
+                .taskRecurrence(newRecurrence)
+                .build();
 
-        Assertions.assertThat(savedTask.getStartDate()).isNotNull();
-        Assertions.assertThat(savedTask.getStartDate()).isCloseTo(LocalDateTime.now(), within(1, ChronoUnit.SECONDS));
-        Assertions.assertThat(newTask.getStartDate()).isEqualTo(savedTask.getStartDate());
+        TaskDto taskDtoWithRecurrence = defaultTaskDto.toBuilder()
+                .taskRecurrenceId(newRecurrence.getTaskRecurrenceId())
+                .build();
 
+        when(categoryService.findById(anyLong())).thenReturn(defaultCategory);
+        when(recurrenceFactory.createRecurrence(any(TaskRecurrenceDto.class), any(RecurrencePatternDto.class))).thenReturn(newRecurrence);
+        when(recurrenceRepository.save(any(TaskRecurrence.class))).thenReturn(newRecurrence);
+        when(taskFactory.createTask(any(TaskDto.class), any(Category.class), any(TaskRecurrence.class))).thenReturn(taskWithRecurrence);
+        when(taskRepository.save(any(Task.class))).thenReturn(taskWithRecurrence);
+        when(taskMapper.toDto(any(Task.class))).thenReturn(taskDtoWithRecurrence);
+
+        TaskDto result = taskService.createTaskWithRecurrence(defaultTaskDto, recurrenceDto, patternDto);
+
+        Assertions.assertThat(result).isNotNull();
+        Assertions.assertThat(result.getTitle()).isEqualTo("Default Task");
+        verify(recurrenceRepository, times(2)).save(any(TaskRecurrence.class));
     }
 
 //    @Test
@@ -279,66 +330,62 @@ public class TaskServiceTest {
 //    }
 
     @Test
-    public void TaskService_UpdateTask_Completed_ReturnUpdatedTask(){
-        Task task = defaultTask.toBuilder()
+    public void Task_updated_as_completed(){
+        Task existingTask = defaultTask.toBuilder()
                 .title("Test Task")
                 .completed(false)
                 .build();
-        TaskDto taskDto = defaultTaskDto.toBuilder()
+        TaskDto updatedTaskDto = defaultTaskDto.toBuilder()
                 .completed(true)
                 .build();
-        when(taskRepository.findById(anyLong())).thenReturn(Optional.of(task));
-        when(categoryRepository.findById(anyLong())).thenReturn(Optional.of(defaultCategory));
-        when(taskRepository.save(any(Task.class))).thenReturn(task);
+        Task updatedtask = existingTask.toBuilder()
+                .completed(true)
+                .build();
 
-        TaskDto updatedTask = taskService.updateTask(1L, taskDto);
+        when(taskRepository.findById(anyLong())).thenReturn(Optional.of(existingTask));
+        when(categoryService.findById(anyLong())).thenReturn(defaultCategory);
+        when(taskRepository.save(any(Task.class))).thenReturn(existingTask);
+        when(taskMapper.toDto(any(Task.class))).thenReturn(updatedTaskDto);
 
-        verify(taskRepository).save(task);
+        TaskDto updatedTask = taskService.updateTask(1L, updatedTaskDto);
+
+        verify(taskRepository).save(existingTask);
         Assertions.assertThat(updatedTask.isCompleted()).isEqualTo(true);
     }
 
     @Test
-    public void TaskService_UpdateTask_Title_ReturnUpdatedTask() {
-        TaskDto newTaskDto = defaultTaskDto.toBuilder()
+    public void Task_updated_with_new_title() {
+        TaskDto updatedTaskDto = defaultTaskDto.toBuilder()
                 .title("New Title")
-                .priority(null)
-                .completed(false)
-                .categoryId(null)
                 .build();
 
-        Task task = defaultTask.toBuilder()
-                .title(newTaskDto.getTitle())
-                .build();
+        when(taskRepository.findById(anyLong())).thenReturn(Optional.of(defaultTask));
+        when(categoryService.findById(anyLong())).thenReturn(defaultCategory);
+        when(taskRepository.save(any(Task.class))).thenReturn(defaultTask);
+        when(taskMapper.toDto(any(Task.class))).thenReturn(updatedTaskDto);
 
-        when(taskRepository.findById(anyLong())).thenReturn(Optional.of(task));
-        when(taskRepository.save(any(Task.class))).thenReturn(task);
+        TaskDto updatedTask = taskService.updateTask(1L, updatedTaskDto);
 
-        TaskDto updatedTask = taskService.updateTask(1L, newTaskDto);
-
-        verify(taskRepository).save(task);
+        verify(taskRepository).save(defaultTask);
         Assertions.assertThat(updatedTask.getTitle()).isEqualTo("New Title");
     }
 
     @Test
     public void TaskService_UpdateTask_Priority_ReturnUpdatedTask(){
-        TaskDto newTaskDto = defaultTaskDto.toBuilder()
-                .title("task title")
+        TaskDto updatedTaskDto = defaultTaskDto.toBuilder()
                 .priority(4)
                 .build();
 
-        Task task = defaultTask.toBuilder()
-                .title("task title")
-                .priority(4)
-                .build();
+        when(taskRepository.findById(anyLong())).thenReturn(Optional.of(defaultTask));
+        when(categoryService.findById(anyLong())).thenReturn(defaultCategory);
+        when(taskRepository.save(any(Task.class))).thenReturn(defaultTask);
+        when(taskMapper.toDto(any(Task.class))).thenReturn(updatedTaskDto);
 
-        when(taskRepository.findById(anyLong())).thenReturn(Optional.of(task));
-        when(categoryRepository.findById(anyLong())).thenReturn(Optional.of(defaultCategory));
-        when(taskRepository.save(any(Task.class))).thenReturn(task);
+        TaskDto updatedTask = taskService.updateTask(1L, updatedTaskDto);
 
-        TaskDto updatedTask = taskService.updateTask(1L, newTaskDto);
-
+        verify(taskRepository).save(defaultTask);
         Assertions.assertThat(updatedTask.getPriority()).isEqualTo(4);
-        verify(taskRepository).save(any(Task.class));
+
     }
 
 //    @Test
