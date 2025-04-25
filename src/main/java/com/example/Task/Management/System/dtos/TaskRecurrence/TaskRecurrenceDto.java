@@ -2,9 +2,11 @@ package com.example.Task.Management.System.dtos.TaskRecurrence;
 
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
+import lombok.Builder;
 
 import java.time.LocalDateTime;
 
+@Builder(toBuilder = true)
 public record TaskRecurrenceDto(
         Long taskRecurrenceId,
 

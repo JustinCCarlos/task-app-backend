@@ -6,8 +6,8 @@ import com.example.Task.Management.System.models.recurrence.TaskRecurrence;
 
 public interface TaskRecurrenceService {
     TaskRecurrence findById(Long id);
-    TaskRecurrenceDto createRecurrence(TaskRecurrenceDto recurrenceDto);
-    void generateNextTask(TaskRecurrenceDto recurrenceDto, RecurrencePatternDto patternDto);
+    TaskRecurrenceDto createRecurrenceForExistingTask(TaskRecurrenceDto recurrenceDto, RecurrencePatternDto patternDto);
+    void generateNextTask(TaskRecurrenceDto recurrenceDto);
     void deleteTaskRecurrence(Long id);
 
 }

@@ -2,7 +2,7 @@ package com.example.Task.Management.System.dtos.TaskRecurrence;
 
 import lombok.Builder;
 
-@Builder
+@Builder(toBuilder = true)
 public record TaskDurationDto (
      Integer minutes,
      Integer hours,

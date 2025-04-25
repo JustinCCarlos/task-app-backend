@@ -1,15 +1,14 @@
 package com.example.Task.Management.System.services.implementations;
 
-import com.example.Task.Management.System.domainservice.TaskRecurrenceCalculator;
-import com.example.Task.Management.System.dtos.Task.TaskDto;
-import com.example.Task.Management.System.mappers.TaskMapper;
+import com.example.Task.Management.System.domainservice.TaskFactory;
+import com.example.Task.Management.System.domainservice.TaskRecurrenceFactory;
 import com.example.Task.Management.System.dtos.TaskRecurrence.RecurrencePatternDto;
-import com.example.Task.Management.System.mappers.RecurrencePatternMapper;
 import com.example.Task.Management.System.dtos.TaskRecurrence.TaskRecurrenceDto;
 import com.example.Task.Management.System.mappers.TaskRecurrenceMapper;
-import com.example.Task.Management.System.services.TaskRecurrenceService;
-import com.example.Task.Management.System.services.TaskService;
 import com.example.Task.Management.System.models.recurrence.RecurrencePattern;
+import com.example.Task.Management.System.repository.RecurrencePatternRepository;
+import com.example.Task.Management.System.repository.TaskRepository;
+import com.example.Task.Management.System.services.TaskRecurrenceService;
 import com.example.Task.Management.System.models.recurrence.TaskRecurrence;
 import com.example.Task.Management.System.models.Task;
 import com.example.Task.Management.System.repository.TaskRecurrenceRepository;
@@ -19,62 +18,62 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityNotFoundException;
-import java.time.LocalDateTime;
 
 @Service
 public class TaskRecurrenceImpl implements TaskRecurrenceService {
 
     private static final Logger logger = LoggerFactory.getLogger(TaskRecurrenceImpl.class);
 
-    private final TaskRecurrenceRepository taskRecurrenceRepository;
-    private final TaskService taskService;
-    private final TaskRecurrenceCalculator calculator;
+    private final TaskRecurrenceRepository recurrenceRepository;
+    private final RecurrencePatternRepository patternRepository;
+    private final TaskRepository taskRepository;
+    private final TaskFactory taskFactory;
+    private final TaskRecurrenceFactory recurrenceFactory;
+    private final TaskRecurrenceMapper recurrenceMapper;
 
     @Autowired
     public TaskRecurrenceImpl(
-            TaskRecurrenceRepository taskRecurrenceRepository,
-            TaskService taskService,
-            TaskRecurrenceCalculator calculator)
+            TaskRecurrenceRepository recurrenceRepository, RecurrencePatternRepository patternRepository,
+            TaskRepository taskRepository,
+            TaskFactory taskFactory,
+            TaskRecurrenceFactory recurrenceFactory, TaskRecurrenceMapper recurrenceMapper)
     {
-        this.taskRecurrenceRepository = taskRecurrenceRepository;
-        this.taskService = taskService;
-        this.calculator = calculator;
+        this.recurrenceRepository = recurrenceRepository;
+        this.patternRepository = patternRepository;
+        this.taskRepository = taskRepository;
+        this.taskFactory = taskFactory;
+        this.recurrenceFactory = recurrenceFactory;
+        this.recurrenceMapper = recurrenceMapper;
     }
 
     public TaskRecurrence findById(Long id){
-        return taskRecurrenceRepository.findById(id)
+        return recurrenceRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Recurrence not found with id " + id ));
     }
 
-    public TaskRecurrenceDto createRecurrence(TaskRecurrenceDto recurrenceDto) {
-        TaskRecurrence taskRecurrence = TaskRecurrenceMapper.toEntity(recurrenceDto);
-        TaskRecurrence savedRecurrence = taskRecurrenceRepository.save(taskRecurrence);
-        return TaskRecurrenceMapper.toDto(savedRecurrence);
+    public TaskRecurrenceDto createRecurrenceForExistingTask(TaskRecurrenceDto recurrenceDto, RecurrencePatternDto patternDto) {
+        TaskRecurrence taskRecurrence = recurrenceFactory.createRecurrence(recurrenceDto, patternDto);
+
+        patternRepository.save(taskRecurrence.getRecurrencePattern());
+        TaskRecurrence savedRecurrence = recurrenceRepository.save(taskRecurrence);
+        return recurrenceMapper.toDto(savedRecurrence);
     }
 
-    public void generateNextTask(TaskRecurrenceDto recurrenceDto, RecurrencePatternDto patternDto) {
+    public void generateNextTask(TaskRecurrenceDto recurrenceDto) {
         try{
             logger.info("Generating next task...");
-            TaskRecurrence taskRecurrence = TaskRecurrenceMapper.toEntity(recurrenceDto);
-            RecurrencePattern pattern = RecurrencePatternMapper.toEntity(patternDto);
+            RecurrencePattern pattern = patternRepository.findById(recurrenceDto.recurrencePatternId())
+                    .orElseThrow(() -> new EntityNotFoundException("Pattern not found with id: " + recurrenceDto.recurrencePatternId()));
+            TaskRecurrence taskRecurrence = recurrenceMapper.toEntity(recurrenceDto, pattern);
             Task currentTask = taskRecurrence.getGeneratedTasks().getLast();
 
-            LocalDateTime nextStartDate = calculator.calculateNextStartDate(currentTask.getStartDate(), pattern);
-            LocalDateTime nextEndDate = calculator.calculateNextEndDate(nextStartDate, pattern);
+            Task nextTask = taskFactory.createNextTask(currentTask, taskRecurrence);
 
-            Task nextTask = currentTask.toBuilder()
-                    .completed(false)
-                    .startDate(nextStartDate)
-                    .endDate(nextEndDate)
-                    .finishedDate(null)
-                    .overdue(false)
-                    .taskRecurrence(taskRecurrence)
-                    .build();
-            TaskDto nextTaskDto = TaskMapper.toDto(nextTask);
+            taskRepository.save(nextTask);
 
-            taskService.addTask(nextTaskDto);
-            //System.out.println(nextTaskDto);
-            logger.info("Next task generated with dates: start={}, end{}", nextStartDate, nextEndDate);
+            taskRecurrence.getGeneratedTasks().add(nextTask);
+
+            logger.info("Next task generated with dates: start={}, end={}", nextTask.getStartDate(), nextTask.getEndDate());
         } catch (Exception e) {
             logger.error("Error generating next task: ", e);
         }
@@ -83,10 +82,10 @@ public class TaskRecurrenceImpl implements TaskRecurrenceService {
     }
 
     public void deleteTaskRecurrence(Long id){
-        if (!taskRecurrenceRepository.existsById(id)){
+        if (!recurrenceRepository.existsById(id)){
             throw new EntityNotFoundException("Recurrence not found with id: " + id);
         }
-        taskRecurrenceRepository.deleteById(id);
+        recurrenceRepository.deleteById(id);
     }
 
 }
