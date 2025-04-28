@@ -29,7 +29,7 @@ public class TaskRecurrence {
     @Column(name = "recurrence_start_date", nullable = false)
     private LocalDateTime recurrenceStartDate;
 
-    @Column(name = "end_recurrence_date")
+    @Column(name = "recurrence_end_date")
     private LocalDateTime recurrenceEndDate;
 
     @Min(value = 1, message = "Max occurrences must be at least 1")

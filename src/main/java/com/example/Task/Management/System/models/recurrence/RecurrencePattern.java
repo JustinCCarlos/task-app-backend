@@ -48,17 +48,5 @@ public class RecurrencePattern {
     private String monthDayRule; //Ex. "first_monday" "day_15"
 
 }
-//    public void setDaysOfWeek(List<String> daysOfWeek){
-//        this.daysOfWeek = daysOfWeek.stream()
-//                .map(day -> {
-//                    try {
-//                        return DayOfWeek.valueOf(day.toUpperCase());
-//                    } catch (IllegalArgumentException e) {
-//                        throw new IllegalArgumentException("Invalid day of week: " + day);
-//                    }
-//                })
-//                .collect(Collectors.toList());
-//
-//        Collections.sort(this.daysOfWeek);
-//    }
+
 
